@@ -60,7 +60,9 @@ extension TypeSelectorView {
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color(.systemGroupedBackground))
             .listSectionSeparator(.hidden, edges: .top)
+            #if os(iOS)
             .frame(width: UIScreen.main.bounds.width)
+            #endif
             .alignmentGuide(.leading) { _ in -20 }
     }
 }

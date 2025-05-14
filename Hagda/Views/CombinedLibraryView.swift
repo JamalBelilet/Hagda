@@ -68,7 +68,7 @@ struct CombinedLibraryView: View {
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.inset)
         .scrollContentBackground(.visible)
         .background(Color(.systemGroupedBackground))
         .scrollIndicators(.visible)
@@ -124,7 +124,7 @@ struct CombinedLibraryView: View {
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.inset)
         .scrollContentBackground(.visible)
         .background(Color(.systemGroupedBackground))
         .scrollIndicators(.visible)

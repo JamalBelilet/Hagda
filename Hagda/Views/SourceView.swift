@@ -33,7 +33,7 @@ struct SourceView: View {
             }
         }
         .navigationTitle(source.name)
-        .listStyle(.insetGrouped)
+        .listStyle(.inset)
         .scrollContentBackground(.visible)
         .background(Color(.systemGroupedBackground))
         .onAppear {

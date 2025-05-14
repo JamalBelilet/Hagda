@@ -41,5 +41,5 @@ struct SectionHeaderView: View {
         }
         .headerProminence(.increased)
     }
-    .listStyle(.insetGrouped)
+    .listStyle(.inset)
 }

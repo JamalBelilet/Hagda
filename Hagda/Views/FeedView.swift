@@ -114,7 +114,7 @@ struct FeedView: View {
                 sources: groupedSources[.podcast, default: []]
             )
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.inset)
         .scrollContentBackground(.visible)
         .background(Color(.systemGroupedBackground))
         .accessibilityIdentifier("FeedList")
