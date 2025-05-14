@@ -1,1 +1,42 @@
+# Xcode
+#
+# gitignore file for Xcode projects
+#
+# For more details, see:
+# https://github.com/github/gitignore/blob/main/Swift.gitignore
+
+## User settings
+xcuserdata/
+
+## Build artifacts
+build/
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+## App packaging
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+## Swift Package Manager
+.build/
+
+## macOS
+.DS_Store
+
+## Test results
+*.xcresult/
+TestResults*
 **/.claude/settings.local.json
