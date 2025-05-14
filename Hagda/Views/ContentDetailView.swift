@@ -108,16 +108,21 @@ struct ArticleDetailView: View {
             } label: {
                 HStack {
                     Text("Read Full Article")
-                    Image(systemName: "arrow.right")
+                    Image(systemName: "safari")
                 }
                 .font(.headline)
-                .padding()
+                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
                 .frame(maxWidth: .infinity)
-                .background(Color.accentColor)
-                .foregroundColor(.white)
-                .cornerRadius(8)
+                .background(Color(.secondarySystemBackground))
+                .foregroundColor(.primary)
+                .cornerRadius(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.accentColor, lineWidth: 1.5)
+                )
             }
-            .padding(.top, 8)
+            .padding(.top, 12)
         }
     }
     
@@ -153,7 +158,12 @@ struct RedditDetailView: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Color(.secondarySystemBackground))
-                        .cornerRadius(16)
+                        .foregroundColor(.primary)
+                        .cornerRadius(10)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.accentColor, lineWidth: 1)
+                        )
                 }
             }
             
@@ -412,9 +422,14 @@ struct PodcastDetailView: View {
                             .cornerRadius(2)
                         
                         Circle()
-                            .fill(Color.accentColor)
-                            .frame(width: 12, height: 12)
-                            .offset(x: geometry.size.width * progress - 6)
+                            .fill(Color.white)
+                            .frame(width: 14, height: 14)
+                            .shadow(color: Color.black.opacity(0.15), radius: 1, x: 0, y: 1)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.accentColor, lineWidth: 2)
+                            )
+                            .offset(x: geometry.size.width * progress - 7)
                     }
                 }
                 .frame(height: 20)
@@ -471,6 +486,10 @@ struct PodcastDetailView: View {
                         // Speed
                     } label: {
                         Text("1.0x")
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(6)
                     }
                     
                     Button {
