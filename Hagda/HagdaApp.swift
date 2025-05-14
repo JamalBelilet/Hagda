@@ -9,9 +9,22 @@ import SwiftUI
 
 @main
 struct HagdaApp: App {
+    @State private var appModel = AppModel()
+    
+    init() {
+        // Check for UI testing mode
+        if CommandLine.arguments.contains("-UITestingMode") {
+            // Reset the app state for UI testing
+            appModel = AppModel()
+            appModel.selectedSources = []
+        }
+    }
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            FeedView()
+                .environment(appModel)
+                .accessibilityIdentifier("FeedView")
         }
     }
 }
