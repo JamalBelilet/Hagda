@@ -37,6 +37,42 @@ struct FeedView: View {
     /// List of sources grouped by type
     private var sourcesList: some View {
         List {
+            // Daily Summary Section
+            Section {
+                DailySummaryView()
+            } header: {
+                SectionHeaderView(
+                    title: "Daily Summary",
+                    description: "Your personalized briefing for today",
+                    icon: "newspaper"
+                )
+            }
+            .headerProminence(.increased)
+            
+            // Continue Reading/Listening Section
+            Section {
+                ContinueItemsView()
+            } header: {
+                SectionHeaderView(
+                    title: "Continue",
+                    description: "Pick up where you left off",
+                    icon: "bookmark"
+                )
+            }
+            .headerProminence(.increased)
+            
+            // Top Content Section
+            Section {
+                TopContentView()
+            } header: {
+                SectionHeaderView(
+                    title: "Top Content",
+                    description: "Popular items from your sources",
+                    icon: "star"
+                )
+            }
+            .headerProminence(.increased)
+            
             // Group sources by type
             let groupedSources = Dictionary(grouping: appModel.feedSources) { $0.type }
             
