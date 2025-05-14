@@ -2,12 +2,17 @@ import Foundation
 import SwiftUI
 
 /// Represents a content item from a source, like an article, post, or episode
-struct ContentItem: Identifiable {
+struct ContentItem: Identifiable, Equatable {
     let id: UUID
     let title: String
     let subtitle: String
     let date: Date
     let type: SourceType
+    
+    // Implement Equatable to allow comparison of ContentItems
+    static func == (lhs: ContentItem, rhs: ContentItem) -> Bool {
+        lhs.id == rhs.id
+    }
     
     init(id: UUID = UUID(), title: String, subtitle: String, date: Date, type: SourceType) {
         self.id = id
