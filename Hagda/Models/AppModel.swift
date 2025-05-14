@@ -17,11 +17,11 @@ class AppModel {
     
     // MARK: - Computed Properties
     
-    /// Sources that appear in the feed
+    /// Sources that appear in the feed (only those selected by the user)
     var feedSources: [Source] {
-        // For mock/demo purposes, we're showing all sources regardless of selection
-        // In a real app, this would filter by selectedSources
-        return sources.sorted { $0.name < $1.name }
+        return sources
+            .filter { selectedSources.contains($0.id) }
+            .sorted { $0.name < $1.name }
     }
     
     /// Categorized sources for display in the library view
@@ -60,11 +60,20 @@ class AppModel {
     init(isTestingMode: Bool = false) {
         self.isTestingMode = isTestingMode
         
-        // For testing purposes, select a few sources by default
+        // Select some default sources to populate the feed
         if !isTestingMode && selectedSources.isEmpty {
-            if let firstSource = sources.first, let lastSource = sources.last {
-                selectedSources.insert(firstSource.id)
-                selectedSources.insert(lastSource.id)
+            // Select one of each type to demonstrate all section types
+            let typesToInclude: [SourceType] = [.article, .reddit, .bluesky, .podcast]
+            
+            for type in typesToInclude {
+                if let source = sources.first(where: { $0.type == type }) {
+                    selectedSources.insert(source.id)
+                }
+            }
+            
+            // Add one more reddit source to show multiple items in a section
+            if let secondReddit = sources.filter({ $0.type == .reddit }).dropFirst().first {
+                selectedSources.insert(secondReddit.id)
             }
         }
     }
