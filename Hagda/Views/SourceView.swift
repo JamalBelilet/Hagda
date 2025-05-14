@@ -20,7 +20,9 @@ struct SourceView: View {
             // Content items section
             Section {
                 ForEach(appModel.getContentForSource(source)) { item in
-                    ContentItemRow(item: item)
+                    NavigationLink(destination: ContentDetailView(item: item)) {
+                        ContentItemRow(item: item)
+                    }
                 }
             } header: {
                 SectionHeaderView(
