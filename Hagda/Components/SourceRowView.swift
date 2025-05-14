@@ -36,19 +36,8 @@ struct SourceRowView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                 
-                // Show a badge if this source is selected
-                if appModel.isSourceSelected(source) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                            .font(.caption)
-                        
-                        Text("Following")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.top, 2)
-                }
+                // We don't need to show the following state in the feed view since
+                // anything shown in the feed is already being followed by the user
             }
             
             Spacer()
