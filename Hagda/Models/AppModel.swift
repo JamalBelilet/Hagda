@@ -1,19 +1,77 @@
 import Foundation
 import SwiftUI
 
+/// The main application model that manages sources and user selections
 @Observable
 class AppModel {
+    // MARK: - Properties
+    
+    /// All available sources
     var sources: [Source] = Source.sampleSources
+    
+    /// IDs of sources selected by the user to appear in their feed
     var selectedSources: Set<UUID> = []
     
-    // Sources that appear in the feed - now showing all sources as mock data
+    /// Flag for UI testing mode
+    var isTestingMode: Bool = false
+    
+    // MARK: - Computed Properties
+    
+    /// Sources that appear in the feed
     var feedSources: [Source] {
-        // Instead of filtering by selectedSources, we'll show all sources
-        // This is just a mock, in a real app we'd still filter by selectedSources
+        // For mock/demo purposes, we're showing all sources regardless of selection
+        // In a real app, this would filter by selectedSources
         return sources.sorted { $0.name < $1.name }
     }
     
-    // Toggle source selection for feed
+    /// Categorized sources for display in the library view
+    var categories: [String: [Source]] {
+        var result: [String: [Source]] = [:]
+        
+        // Articles category
+        let articleSources = sources.filter { $0.type == .article }
+        if !articleSources.isEmpty {
+            result["Top Tech Articles"] = articleSources
+        }
+        
+        // Reddit category
+        let redditSources = sources.filter { $0.type == .reddit }
+        if !redditSources.isEmpty {
+            result["Popular Subreddits"] = redditSources
+        }
+        
+        // Podcasts category
+        let podcastSources = sources.filter { $0.type == .podcast }
+        if !podcastSources.isEmpty {
+            result["Tech Podcasts"] = podcastSources
+        }
+        
+        // Social media category (bluesky and mastodon)
+        let socialSources = sources.filter { $0.type == .bluesky || $0.type == .mastodon }
+        if !socialSources.isEmpty {
+            result["Tech Influencers"] = socialSources
+        }
+        
+        return result
+    }
+    
+    // MARK: - Initialization
+    
+    init(isTestingMode: Bool = false) {
+        self.isTestingMode = isTestingMode
+        
+        // For testing purposes, select a few sources by default
+        if !isTestingMode && selectedSources.isEmpty {
+            if let firstSource = sources.first, let lastSource = sources.last {
+                selectedSources.insert(firstSource.id)
+                selectedSources.insert(lastSource.id)
+            }
+        }
+    }
+    
+    // MARK: - Source Management
+    
+    /// Toggle a source's selection state
     func toggleSourceSelection(_ source: Source) {
         if selectedSources.contains(source.id) {
             selectedSources.remove(source.id)
@@ -22,21 +80,23 @@ class AppModel {
         }
     }
     
-    // Check if a source is selected
+    /// Check if a source is currently selected
     func isSourceSelected(_ source: Source) -> Bool {
         selectedSources.contains(source.id)
     }
     
-    // Add a new custom source
+    /// Add a new custom source
     func addSource(_ source: Source) {
         sources.append(source)
         // Automatically select the newly added source
         selectedSources.insert(source.id)
     }
     
-    // Search for sources by URL or text (mocked for now)
+    // MARK: - Search
+    
+    /// Search for sources by query and type (mocked implementation)
     func searchSources(query: String, type: SourceType) -> [Source] {
-        // For a mock implementation, we'll return different predefined sources based on type
+        // This is a mock implementation that returns predefined sources based on type
         switch type {
         case .article:
             return [
@@ -66,32 +126,10 @@ class AppModel {
         }
     }
     
-    // Categories for organizing sources in the library
-    var categories: [String: [Source]] {
-        let articleSources = sources.filter { $0.type == .article }
-        let redditSources = sources.filter { $0.type == .reddit }
-        let podcastSources = sources.filter { $0.type == .podcast }
-        
-        var result: [String: [Source]] = [:]
-        
-        if !articleSources.isEmpty {
-            result["Top Tech Articles"] = articleSources
-        }
-        
-        if !redditSources.isEmpty {
-            result["Popular Subreddits"] = redditSources
-        }
-        
-        if !podcastSources.isEmpty {
-            result["Tech Podcasts"] = podcastSources
-        }
-        
-        // Social media sources (combining bluesky and mastodon)
-        let socialSources = sources.filter { $0.type == .bluesky || $0.type == .mastodon }
-        if !socialSources.isEmpty {
-            result["Tech Influencers"] = socialSources
-        }
-        
-        return result
+    // MARK: - Content Management
+    
+    /// Fetch content for a specific source (mocked implementation)
+    func getContentForSource(_ source: Source) -> [ContentItem] {
+        return ContentItem.samplesForSource(source)
     }
 }

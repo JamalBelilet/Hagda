@@ -23,12 +23,20 @@ final class HagdaUITests: XCTestCase {
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testNavigationToLibrary() throws {
         let app = XCUIApplication()
         app.launch()
-
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+        
+        // Verify we're on the feed screen
+        XCTAssertTrue(app.navigationBars["Taila"].exists)
+        
+        // Navigate to library
+        app.navigationBars["Taila"].buttons.element(boundBy: 0).tap()
+        sleep(1)
+        
+        // Verify we see library elements
+        XCTAssertTrue(app.staticTexts["Top Tech Articles"].exists)
+        XCTAssertTrue(app.staticTexts["Popular Subreddits"].exists)
     }
 
     @MainActor

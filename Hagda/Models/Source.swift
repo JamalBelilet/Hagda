@@ -1,5 +1,6 @@
 import Foundation
 
+/// Represents the different types of content sources available in the app
 enum SourceType: String, CaseIterable, Identifiable {
     case article
     case reddit
@@ -9,6 +10,7 @@ enum SourceType: String, CaseIterable, Identifiable {
     
     var id: String { rawValue }
     
+    /// The SF Symbol icon name for this source type
     var icon: String {
         switch self {
         case .article: return "doc.text"
@@ -18,8 +20,51 @@ enum SourceType: String, CaseIterable, Identifiable {
         case .podcast: return "headphones"
         }
     }
+    
+    /// User-friendly display name for this source type
+    var displayName: String {
+        switch self {
+        case .article: return "News"
+        case .reddit: return "Reddit"
+        case .bluesky: return "Bluesky"
+        case .mastodon: return "Mastodon"
+        case .podcast: return "Podcast"
+        }
+    }
+    
+    /// Localized search placeholder text for this source type
+    var searchPlaceholder: String {
+        switch self {
+        case .article: return "Search for news source..."
+        case .reddit: return "Enter subreddit name..."
+        case .bluesky: return "Enter Bluesky handle..."
+        case .mastodon: return "Enter Mastodon handle..."
+        case .podcast: return "Search for podcast..."
+        }
+    }
+    
+    /// Default section header title for this source type 
+    var sectionTitle: String {
+        switch self {
+        case .article: return "Top Tech Articles"
+        case .reddit: return "Reddit Communities"
+        case .bluesky, .mastodon: return "Social Media"
+        case .podcast: return "Tech Podcasts"
+        }
+    }
+    
+    /// Default section description for this source type
+    var sectionDescription: String {
+        switch self {
+        case .article: return "Latest articles from tech news sources"
+        case .reddit: return "Trending posts from popular subreddits"
+        case .bluesky, .mastodon: return "Updates from people you follow"
+        case .podcast: return "Latest episodes from your favorite shows"
+        }
+    }
 }
 
+/// Represents a content source that can be followed and displayed in the feed
 struct Source: Identifiable {
     let id = UUID()
     let name: String
@@ -27,14 +72,17 @@ struct Source: Identifiable {
     let description: String
     let handle: String?
     
-    // Custom initializer for search results
     init(name: String, type: SourceType, description: String, handle: String? = nil) {
         self.name = name
         self.type = type
         self.description = description
         self.handle = handle
     }
-    
+}
+
+// MARK: - Sample Data
+extension Source {
+    /// Sample sources for development and preview purposes
     static var sampleSources: [Source] {
         [
             // Articles

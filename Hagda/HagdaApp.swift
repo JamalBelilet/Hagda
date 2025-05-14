@@ -9,22 +9,26 @@ import SwiftUI
 
 @main
 struct HagdaApp: App {
-    @State private var appModel = AppModel()
+    // MARK: - Properties
+    
+    /// Main app model that is shared across all views
+    @State private var appModel: AppModel
+    
+    // MARK: - Initialization
     
     init() {
         // Check for UI testing mode
-        if CommandLine.arguments.contains("-UITestingMode") {
-            // Reset the app state for UI testing
-            appModel = AppModel()
-            appModel.selectedSources = []
-        }
+        let isTestingMode = CommandLine.arguments.contains("-UITestingMode")
+        _appModel = State(initialValue: AppModel(isTestingMode: isTestingMode))
     }
+    
+    // MARK: - App Scene
     
     var body: some Scene {
         WindowGroup {
-            FeedView()
+            ContentView()
                 .environment(appModel)
-                .accessibilityIdentifier("FeedView")
+                .accessibilityIdentifier("RootView")
         }
     }
 }
