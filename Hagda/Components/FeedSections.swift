@@ -266,13 +266,20 @@ struct ContinueItemsView: View {
     @State private var isRefreshing = false
     @State private var selectedItem: ContentItem?
     @State private var showItemDetail = false
+    @State private var showAllItems = false
+    
+    // Maximum number of items to show in the feed view
+    private let maxItemsInFeed = 3
     
     var body: some View {
         VStack(spacing: 0) {
             if continueItems.isEmpty {
                 emptyStateView
             } else {
-                ForEach(continueItems) { item in
+                // Show limited items in the feed
+                let limitedItems = Array(continueItems.prefix(maxItemsInFeed))
+                
+                ForEach(limitedItems) { item in
                     VStack(spacing: 0) {
                         // Main row with content and progress
                         Button {
@@ -294,7 +301,7 @@ struct ContinueItemsView: View {
                         .buttonStyle(.plain)
                         
                         // Add spacing after the entire item
-                        if item != continueItems.last {
+                        if item != limitedItems.last {
                             Divider()
                                 .padding(.vertical, 10)
                         }
@@ -304,12 +311,43 @@ struct ContinueItemsView: View {
                             .frame(height: 16)
                     }
                 }
+                
+                // "See All" button if there are more items than we're showing
+                if continueItems.count > maxItemsInFeed {
+                    Divider()
+                        .padding(.vertical, 10)
+                    
+                    NavigationLink(destination: ContinueReadingView()) {
+                        HStack {
+                            Text("See All")
+                                .font(.headline)
+                                .foregroundColor(.accentColor)
+                            
+                            Spacer()
+                            
+                            Text("\(continueItems.count) items")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.accentColor)
+                        }
+                        .padding()
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(12)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
         .navigationDestination(isPresented: $showItemDetail) {
             if let item = selectedItem {
                 ContentDetailView(item: item)
             }
+        }
+        .navigationDestination(isPresented: $showAllItems) {
+            ContinueReadingView()
         }
         .refreshable {
             await refreshContinueItems()
@@ -491,8 +529,11 @@ extension ContinueItemsView {
         let calendar = Calendar.current
         let now = Date()
         
-        // Generate one item for each content type
-        let articleItem = ContentItem(
+        // Create a variety of items for each content type
+        var allItems: [ContentItem] = []
+        
+        // Article items
+        allItems.append(ContentItem(
             title: "The Evolution of Sustainable Technology: Green Tech in 2024",
             subtitle: "From ZDNet • 8 min read",
             date: calendar.date(byAdding: .hour, value: -4, to: now) ?? now,
@@ -506,9 +547,26 @@ extension ContinueItemsView {
             • Circular economy principles applied to hardware procurement and disposal
             """,
             progressPercentage: 0.35
-        )
+        ))
         
-        let podcastItem = ContentItem(
+        allItems.append(ContentItem(
+            title: "Web Development Frameworks in 2024: What's Hot and What's Not",
+            subtitle: "From DEV Community • 12 min read",
+            date: calendar.date(byAdding: .hour, value: -8, to: now) ?? now,
+            type: .article,
+            contentPreview: """
+            This in-depth analysis continues with framework benchmarks:
+            
+            • Performance comparison across major JavaScript frameworks
+            • Developer experience metrics and community support trends
+            • Enterprise adoption patterns and migration strategies
+            • Emerging micro-frameworks and their specialized use cases
+            """,
+            progressPercentage: 0.22
+        ))
+        
+        // Podcast items
+        allItems.append(ContentItem(
             title: "The Vergecast: AI's Role in Reshaping Media Consumption",
             subtitle: "The Vergecast • 30 min remaining",
             date: calendar.date(byAdding: .hour, value: -1, to: now) ?? now,
@@ -522,9 +580,26 @@ extension ContinueItemsView {
             • Debate on the ethical implications of AI-generated media and potential regulations
             """,
             progressPercentage: 0.65
-        )
+        ))
         
-        let redditItem = ContentItem(
+        allItems.append(ContentItem(
+            title: "This Week in Tech: Apple's New Developer Tools Explained",
+            subtitle: "TWiT • 42 min remaining",
+            date: calendar.date(byAdding: .hour, value: -12, to: now) ?? now,
+            type: .podcast,
+            contentPreview: """
+            The episode continues with expert analysis on:
+            
+            • Detailed walkthrough of Apple's new development environment
+            • Practical applications of the new machine learning frameworks
+            • Cross-platform considerations and compatibility improvements
+            • Future roadmap predictions and strategic implications
+            """,
+            progressPercentage: 0.28
+        ))
+        
+        // Reddit items
+        allItems.append(ContentItem(
             title: "The IT-Security Convergence: Why Your Organization Needs It",
             subtitle: "r/cybersecurity • 15 min read",
             date: calendar.date(byAdding: .hour, value: -6, to: now) ?? now,
@@ -538,11 +613,26 @@ extension ContinueItemsView {
             • Metrics that show improved security posture after convergence
             """,
             progressPercentage: 0.42
-        )
+        ))
         
-        // Pick two or three random items to show
-        let potentialItems = [articleItem, podcastItem, redditItem]
-        return Array(potentialItems.shuffled().prefix(Int.random(in: 2...3)))
+        allItems.append(ContentItem(
+            title: "I built a low-code tool that automates API testing - looking for feedback",
+            subtitle: "r/programming • 8 min read",
+            date: calendar.date(byAdding: .hour, value: -24, to: now) ?? now,
+            type: .reddit,
+            contentPreview: """
+            The post continues with the implementation details:
+            
+            • Technical architecture using Node.js and WebSockets
+            • Frontend implementation with React and state management
+            • Automated test generation from OpenAPI specifications
+            • Performance benchmarks and scalability considerations
+            """,
+            progressPercentage: 0.51
+        ))
+        
+        // Shuffle all items and return 4-6 items to ensure we have enough to show the "See All" button
+        return Array(allItems.shuffled().prefix(Int.random(in: 4...6)))
     }
     
     // Generate progress value for visual indicator
@@ -627,7 +717,7 @@ struct TopContentView: View {
     
     // Card for top content item
     private func topContentCard(for item: ContentItem) -> some View {
-        VStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 12) {
             // Header with badge
             HStack {
                 Label {
