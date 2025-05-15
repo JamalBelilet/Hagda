@@ -68,7 +68,10 @@ struct FeedView: View {
                 ContinueItemsView()
                 
                 // View All button at bottom of section
-                ViewAllButton(title: "Continue", action: { showContinueAll = true })
+                HStack {
+                    ViewAllButton(title: "Continue", action: { showContinueAll = true })
+                }
+                .listRowSeparator(.hidden)
             } header: {
                 SectionHeaderView(
                     title: "Continue",
@@ -89,7 +92,10 @@ struct FeedView: View {
                 TopContentView()
                 
                 // View All button at bottom of section
-                ViewAllButton(title: "Trending", action: { showTrendingAll = true })
+                HStack {
+                    ViewAllButton(title: "Trending", action: { showTrendingAll = true })
+                }
+                .listRowSeparator(.hidden)
             } header: {
                 SectionHeaderView(
                     title: "Trending Now",
