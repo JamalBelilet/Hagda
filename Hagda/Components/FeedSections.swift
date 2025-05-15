@@ -280,7 +280,10 @@ struct ContinueItemsView: View {
                         .buttonStyle(.plain)
                         
                         // Preview of remaining content - always shown
-                        RemainingContentPreview(item: item)
+                        NavigationLink(destination: ContentDetailView(item: item)) {
+                            RemainingContentPreview(item: item)
+                        }
+                        .buttonStyle(.plain)
                         
                         // Add spacing after the entire item
                         if item != continueItems.last {
@@ -422,6 +425,7 @@ struct RemainingContentPreview: View {
         .padding(.top, 4)
         .padding(.bottom, 8)
         .frame(maxWidth: .infinity)
+        .contentShape(Rectangle()) // Make entire area tappable
     }
 }
 
