@@ -9,46 +9,66 @@ import SwiftUI
 struct DailySummaryView: View {
     @Environment(AppModel.self) private var appModel
     @State private var showingSettings = false
+    @State private var navigateToDetails = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Date heading
-            HStack {
-                Text(dateString)
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
+        Button {
+            navigateToDetails = true
+        } label: {
+            VStack(alignment: .leading, spacing: 16) {
+                // Date heading
+                HStack {
+                    Text(dateString)
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    
+                    Spacer()
+                    
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        Image(systemName: "pencil.circle")
+                            .font(.title3)
+                            .foregroundColor(.accentColor)
+                    }
+                    .buttonStyle(.plain)
+                }
                 
-                Spacer()
+                // Summary text
+                Text(generateSummary())
+                    .font(.body)
+                    .lineSpacing(5)
                 
-                Button {
-                    showingSettings = true
-                } label: {
-                    Image(systemName: "pencil.circle")
-                        .font(.title3)
+                // Sources attribution
+                HStack(spacing: 0) {
+                    Text("Curated from ")
+                    Text(generateSourceAttribution())
+                        .foregroundStyle(.secondary)
+                }
+                .font(.footnote)
+                .padding(.top, 4)
+                
+                // "See details" indicator without chevron
+                HStack {
+                    Spacer()
+                    
+                    Text("See details")
+                        .font(.caption)
+                        .fontWeight(.medium)
                         .foregroundColor(.accentColor)
                 }
-                .buttonStyle(.plain)
+                .padding(.top, 4)
             }
-            
-            // Summary text
-            Text(generateSummary())
-                .font(.body)
-                .lineSpacing(5)
-            
-            // Sources attribution
-            HStack(spacing: 0) {
-                Text("Curated from ")
-                Text(generateSourceAttribution())
-                    .foregroundStyle(.secondary)
-            }
-            .font(.footnote)
-            .padding(.top, 4)
+            .padding()
+            .background(Color.gray.opacity(0.2))
+            .cornerRadius(12)
+            .padding(.vertical, 4)
         }
-        .padding()
-        .background(Color.gray.opacity(0.2))
-        .cornerRadius(12)
-        .padding(.vertical, 4)
+        .buttonStyle(PlainButtonStyle())
         .accessibilityIdentifier("DailySummary")
+        .navigationDestination(isPresented: $navigateToDetails) {
+            DailyBriefDetailView()
+        }
         .sheet(isPresented: $showingSettings) {
             NavigationStack {
                 DailySummarySettingsView()

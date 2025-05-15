@@ -504,20 +504,6 @@ struct PodcastDetailView: View {
                     .padding(12)
             }
             
-            // Episode description
-            Text("Episode Description")
-                .font(.headline)
-                .padding(.top, 4)
-            
-            Text(generateMockContent())
-                .font(.body)
-                .lineSpacing(5)
-            
-            // What's coming up next section
-            if item.progressPercentage > 0 {
-                comingUpNextSection
-            }
-            
             // Player controls
             VStack(spacing: 12) {
                 // Progress bar
@@ -630,6 +616,20 @@ struct PodcastDetailView: View {
             }
             .padding(.top, 20)
             
+            // Episode description
+            Text("Episode Description")
+                .font(.headline)
+                .padding(.top, 4)
+            
+            Text(generateMockContent())
+                .font(.body)
+                .lineSpacing(5)
+            
+            // What's coming up next section
+            if item.progressPercentage > 0 {
+                comingUpNextSection
+            }
+            
             // Episode notes
             VStack(alignment: .leading, spacing: 8) {
                 Text("Show Notes")
@@ -645,6 +645,7 @@ struct PodcastDetailView: View {
                             
                             Text("Topic \(i): \(["Understanding modern development tools", "Interview with tech expert Anna Johnson", "Discussion on the future of AI"][i-1])")
                                 .font(.subheadline)
+                            Spacer()
                         }
                     }
                 }
