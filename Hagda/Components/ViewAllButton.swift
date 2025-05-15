@@ -6,26 +6,26 @@ struct ViewAllButton: View {
     let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
-            HStack {
-                Text("View All \(title)")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption)
+        HStack {
+            Spacer()
+            
+            Button(action: action) {
+                HStack(spacing: 4) {
+                    Text("View All")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                }
+                .foregroundColor(.accentColor)
             }
-            .foregroundColor(.accentColor)
-            .padding()
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(10)
+            .buttonStyle(.borderless)
+            .accessibilityIdentifier("ViewAll-\(title)")
         }
-        .buttonStyle(.plain)
         .padding(.horizontal)
-        .padding(.vertical, 8)
-        .accessibilityIdentifier("ViewAll-\(title)")
+        .padding(.top, 4)
+        .padding(.bottom, 8)
     }
 }
 

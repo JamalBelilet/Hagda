@@ -68,7 +68,7 @@ struct FeedView: View {
                 ContinueItemsView()
                 
                 // View All button at bottom of section
-                ViewAllButton(title: "Continue Reading", action: { showContinueAll = true })
+                ViewAllButton(title: "Continue", action: { showContinueAll = true })
             } header: {
                 SectionHeaderView(
                     title: "Continue",
@@ -89,7 +89,7 @@ struct FeedView: View {
                 TopContentView()
                 
                 // View All button at bottom of section
-                ViewAllButton(title: "Trending Content", action: { showTrendingAll = true })
+                ViewAllButton(title: "Trending", action: { showTrendingAll = true })
             } header: {
                 SectionHeaderView(
                     title: "Trending Now",
