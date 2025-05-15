@@ -65,7 +65,7 @@ enum SourceType: String, CaseIterable, Identifiable {
 }
 
 /// Represents a content source that can be followed and displayed in the feed
-struct Source: Identifiable {
+struct Source: Identifiable, Hashable {
     let id = UUID()
     let name: String
     let type: SourceType
@@ -77,6 +77,16 @@ struct Source: Identifiable {
         self.type = type
         self.description = description
         self.handle = handle
+    }
+    
+    // MARK: - Hashable Conformance
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: Source, rhs: Source) -> Bool {
+        lhs.id == rhs.id
     }
 }
 
