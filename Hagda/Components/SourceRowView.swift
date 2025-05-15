@@ -8,21 +8,48 @@ struct SourceRowView: View {
     let source: Source
     @Environment(AppModel.self) private var appModel
     
+    /// Default icon view for sources without artwork
+    private var fallbackSourceIcon: some View {
+        Circle()
+            #if os(iOS) || os(visionOS)
+            .fill(Color(.secondarySystemBackground))
+            #else
+            .fill(Color.gray.opacity(0.2))
+            #endif
+            .frame(width: 44, height: 44)
+            .overlay(
+                Image(systemName: source.type.icon)
+                    .font(.system(size: 20))
+                    .foregroundStyle(Color.accentColor)
+            )
+    }
+    
     var body: some View {
         HStack(spacing: 14) {
-            // Source icon
-            Circle()
-                #if os(iOS) || os(visionOS)
-                .fill(Color(.secondarySystemBackground))
-                #else
-                .fill(Color.gray.opacity(0.2))
-                #endif
+            // Source icon or artwork
+            if let artworkUrl = source.artworkUrl, !artworkUrl.isEmpty {
+                // Display remote artwork for podcasts
+                AsyncImage(url: URL(string: artworkUrl)) { phase in
+                    if let image = phase.image {
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 44, height: 44)
+                            .clipShape(Circle())
+                    } else if phase.error != nil {
+                        // Error loading image, fallback to icon
+                        fallbackSourceIcon
+                    } else {
+                        // Loading state
+                        ProgressView()
+                            .frame(width: 44, height: 44)
+                    }
+                }
                 .frame(width: 44, height: 44)
-                .overlay(
-                    Image(systemName: source.type.icon)
-                        .font(.system(size: 20))
-                        .foregroundStyle(Color.accentColor)
-                )
+            } else {
+                // Default icon for sources without artwork
+                fallbackSourceIcon
+            }
                 
             VStack(alignment: .leading, spacing: 4) {
                 Text(source.name)
@@ -67,23 +94,51 @@ struct SourceResultRowView: View {
         self.onAdd = onAdd
     }
     
+    /// Default icon view for result sources without artwork
+    private var resultFallbackIcon: some View {
+        Circle()
+            #if os(iOS) || os(visionOS)
+            .fill(Color(.secondarySystemBackground))
+            #else
+            .fill(Color.gray.opacity(0.2))
+            #endif
+            .frame(width: 44, height: 44)
+            .overlay(
+                Image(systemName: source.type.icon)
+                    .font(.system(size: 20))
+                    .foregroundStyle(Color.accentColor)
+            )
+    }
+    
     var body: some View {
         Button {
             onAdd(source)
         } label: {
             HStack(spacing: 14) {
-                Circle()
-                    #if os(iOS) || os(visionOS)
-                    .fill(Color(.secondarySystemBackground))
-                    #else
-                    .fill(Color.gray.opacity(0.2))
-                    #endif
+                // Source icon or artwork
+                if let artworkUrl = source.artworkUrl, !artworkUrl.isEmpty {
+                    // Display remote artwork for podcasts
+                    AsyncImage(url: URL(string: artworkUrl)) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 44, height: 44)
+                                .clipShape(Circle())
+                        } else if phase.error != nil {
+                            // Error loading image, fallback to icon
+                            resultFallbackIcon
+                        } else {
+                            // Loading state
+                            ProgressView()
+                                .frame(width: 44, height: 44)
+                        }
+                    }
                     .frame(width: 44, height: 44)
-                    .overlay(
-                        Image(systemName: source.type.icon)
-                            .font(.system(size: 20))
-                            .foregroundStyle(Color.accentColor)
-                    )
+                } else {
+                    // Default icon for sources without artwork
+                    resultFallbackIcon
+                }
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(source.name)

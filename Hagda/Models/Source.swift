@@ -71,12 +71,16 @@ struct Source: Identifiable, Hashable {
     let type: SourceType
     let description: String
     let handle: String?
+    let artworkUrl: String?
+    let feedUrl: String?
     
-    init(name: String, type: SourceType, description: String, handle: String? = nil) {
+    init(name: String, type: SourceType, description: String, handle: String? = nil, artworkUrl: String? = nil, feedUrl: String? = nil) {
         self.name = name
         self.type = type
         self.description = description
         self.handle = handle
+        self.artworkUrl = artworkUrl
+        self.feedUrl = feedUrl
     }
     
     // MARK: - Hashable Conformance

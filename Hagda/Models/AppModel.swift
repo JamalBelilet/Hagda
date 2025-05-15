@@ -166,9 +166,17 @@ class AppModel {
     
     // MARK: - Search
     
-    /// Search for sources by query and type (mocked implementation)
+    /// iTunes Search API service for podcast searches
+    private let itunesSearchService = ITunesSearchService()
+    
+    /// Search for sources by query and type (with real iTunes API for podcasts)
     func searchSources(query: String, type: SourceType) -> [Source] {
-        // This is a mock implementation that returns predefined sources based on type
+        // For podcasts, we return an empty array since search will be handled asynchronously
+        if type == .podcast {
+            return []
+        }
+        
+        // For other types, use mock implementation
         switch type {
         case .article:
             return [
@@ -191,11 +199,24 @@ class AppModel {
                 Source(name: "Tech Policy", type: .mastodon, description: "Analysis of tech policy and regulations.", handle: "@techpolicy@mastodon.social")
             ]
         case .podcast:
-            return [
-                Source(name: "Code Stories", type: .podcast, description: "Stories from developers about their coding journeys.", handle: "by Code Media"),
-                Source(name: "Tech This Week", type: .podcast, description: "Weekly roundup of tech news and discussions.", handle: "by Tech Media Network")
-            ]
+            // This should never be reached as we handle this case above
+            return []
         }
+    }
+    
+    /// Search for podcasts using the iTunes Search API
+    /// - Parameters:
+    ///   - query: The search term
+    ///   - completion: Closure that will be called with the results or error
+    func searchPodcasts(query: String, completion: @escaping (Result<[Source], Error>) -> Void) {
+        itunesSearchService.searchPodcasts(query: query, limit: 20, completion: completion)
+    }
+    
+    /// Search for podcasts using the iTunes Search API with async/await
+    /// - Parameter query: The search term
+    /// - Returns: Array of Source objects representing podcasts
+    func searchPodcasts(query: String) async throws -> [Source] {
+        return try await itunesSearchService.searchPodcasts(query: query, limit: 20)
     }
     
     /// Toggle a source's prioritized state in the daily summary

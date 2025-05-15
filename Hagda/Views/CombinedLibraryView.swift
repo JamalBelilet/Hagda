@@ -14,6 +14,7 @@ struct CombinedLibraryView: View {
     @State private var isSearching = false
     @State private var showingResults = false
     @State private var selectedType: SourceType = .article
+    @State private var errorMessage: String? = nil
     
     // MARK: - Body
     
@@ -128,11 +129,25 @@ struct CombinedLibraryView: View {
                 }
             } else {
                 Section {
-                    if searchResults.isEmpty {
+                    if let error = errorMessage {
+                        EmptyStateView(
+                            icon: "exclamationmark.triangle",
+                            title: "Search Error",
+                            message: error
+                        )
+                        .frame(height: 200)
+                        #if os(iOS) || os(visionOS)
+                        .listRowBackground(Color(.secondarySystemBackground))
+                        #else
+                        .listRowBackground(Color.gray.opacity(0.2))
+                        #endif
+                    } else if searchResults.isEmpty {
                         EmptyStateView(
                             icon: "magnifyingglass",
                             title: "No Matches Found",
-                            message: "Try different keywords or broaden your search."
+                            message: selectedType == .podcast ? 
+                                "Try different podcast keywords or check your internet connection." : 
+                                "Try different keywords or broaden your search."
                         )
                         .frame(height: 200)
                         #if os(iOS) || os(visionOS)
@@ -216,11 +231,34 @@ struct CombinedLibraryView: View {
         
         isSearching = true
         showingResults = true
+        errorMessage = nil
         
-        // Simulate network delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.searchResults = appModel.searchSources(query: searchQuery, type: selectedType)
-            self.isSearching = false
+        if selectedType == .podcast {
+            // For podcasts, use the iTunes Search API
+            Task {
+                do {
+                    let results = try await appModel.searchPodcasts(query: searchQuery)
+                    // Update UI on the main thread
+                    await MainActor.run {
+                        self.searchResults = results
+                        self.isSearching = false
+                    }
+                } catch {
+                    // Handle errors
+                    await MainActor.run {
+                        self.searchResults = []
+                        self.errorMessage = "Failed to search podcasts: \(error.localizedDescription)"
+                        self.isSearching = false
+                    }
+                }
+            }
+        } else {
+            // For other source types, use the synchronous mock implementation
+            // Simulate network delay for consistency with podcast search
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                self.searchResults = appModel.searchSources(query: searchQuery, type: selectedType)
+                self.isSearching = false
+            }
         }
     }
 }
