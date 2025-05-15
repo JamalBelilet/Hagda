@@ -426,15 +426,9 @@ struct RemainingContentPreview: View {
                 
                 Spacer()
                 
-                HStack(spacing: 4) {
-                    Text(item.remainingContentInfo)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(.accentColor)
-                }
+                Text(item.remainingContentInfo)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 16)
             
