@@ -271,27 +271,28 @@ struct ContinueItemsView: View {
                 emptyStateView
             } else {
                 ForEach(continueItems) { item in
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Main row with content and progress
-                        NavigationLink(destination: ContentDetailView(item: item)) {
-                            continueItemRow(for: item)
-                                .padding(.bottom, 12)
-                        }
-                        .buttonStyle(.plain)
-                        
-                        // Preview of remaining content - always shown
-                        NavigationLink(destination: ContentDetailView(item: item)) {
-                            RemainingContentPreview(item: item)
-                        }
-                        .buttonStyle(.plain)
-                        
-                        // Add spacing after the entire item
-                        if item != continueItems.last {
-                            Divider()
-                                .padding(.vertical, 10)
-                        }
+                    // Main row with content and progress
+                    NavigationLink(destination: ContentDetailView(item: item)) {
+                        continueItemRow(for: item)
+                            .padding(.bottom, 12)
                     }
-                    .padding(.bottom, 16)
+                    .buttonStyle(.plain)
+                    
+                    // Preview of remaining content - completely separate from main row
+                    NavigationLink(destination: ContentDetailView(item: item)) {
+                        RemainingContentPreview(item: item)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // Add spacing after the entire item
+                    if item != continueItems.last {
+                        Divider()
+                            .padding(.vertical, 10)
+                    }
+                    
+                    // Add bottom padding for the entire section
+                    Spacer()
+                        .frame(height: 16)
                 }
             }
         }
@@ -379,9 +380,18 @@ struct ContinueItemsView: View {
             }
             
             Spacer()
+            
+            // Chevron indicator for item row
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.trailing, 4)
         }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 8)
+        .background(Color.white.opacity(0.4))
+        .cornerRadius(12)
         .contentShape(Rectangle())
-        .padding(.vertical, 6)
     }
 }
 
@@ -391,7 +401,7 @@ struct RemainingContentPreview: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            // Header with title and info that mimics the chevron UI
+            // Header with title and info with a visual "continue" indicator
             HStack {
                 Text(item.remainingContentTitle)
                     .font(.subheadline)
@@ -401,9 +411,15 @@ struct RemainingContentPreview: View {
                 
                 Spacer()
                 
-                Text(item.remainingContentInfo)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Text(item.remainingContentInfo)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.accentColor)
+                }
             }
             .padding(.horizontal, 16)
             
@@ -413,17 +429,23 @@ struct RemainingContentPreview: View {
                 .foregroundStyle(.secondary)
                 .lineSpacing(4)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            #if os(iOS) || os(visionOS)
-            .background(Color(.secondarySystemBackground))
-            #else
-            .background(Color.gray.opacity(0.15))
-            #endif
-            .cornerRadius(10)
-            .padding(.horizontal, 16)
+                .padding()
+                #if os(iOS) || os(visionOS)
+                .background(Color(.secondarySystemBackground))
+                #else
+                .background(Color.gray.opacity(0.15))
+                #endif
+                .cornerRadius(10)
+                .padding(.horizontal, 16)
         }
-        .padding(.top, 4)
-        .padding(.bottom, 8)
+        .padding(.vertical, 10)
+        .background(Color.gray.opacity(0.05))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+        )
+        .padding(.horizontal, 4)
         .frame(maxWidth: .infinity)
         .contentShape(Rectangle()) // Make entire area tappable
     }
