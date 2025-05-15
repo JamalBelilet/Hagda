@@ -7,6 +7,9 @@ struct SourceView: View {
     let source: Source
     @Environment(AppModel.self) private var appModel
     @State private var isFollowing: Bool = false
+    @State private var contentItems: [ContentItem] = []
+    @State private var isLoading: Bool = false
+    @State private var errorMessage: String?
     
     // MARK: - Body
     
@@ -19,9 +22,43 @@ struct SourceView: View {
             
             // Content items section
             Section {
-                ForEach(appModel.getContentForSource(source)) { item in
-                    NavigationLink(destination: ContentDetailView(item: item)) {
-                        ContentItemRow(item: item)
+                if isLoading {
+                    ProgressView("Loading content...")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding()
+                } else if let error = errorMessage {
+                    VStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.largeTitle)
+                            .foregroundColor(.orange)
+                            .padding(.bottom, 4)
+                        
+                        Text("Error loading content")
+                            .font(.headline)
+                        
+                        Text(error)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                        
+                        Button("Retry", action: loadContent)
+                            .buttonStyle(.bordered)
+                            .padding(.top, 8)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
+                } else if contentItems.isEmpty {
+                    EmptyStateView(
+                        icon: source.type.icon,
+                        title: "No Content Available",
+                        message: "There's currently no content available from this source."
+                    )
+                    .padding()
+                } else {
+                    ForEach(contentItems) { item in
+                        NavigationLink(destination: ContentDetailView(item: item)) {
+                            ContentItemRow(item: item)
+                        }
                     }
                 }
             } header: {
@@ -38,8 +75,63 @@ struct SourceView: View {
         .background(Color(.gray).opacity(0.1))
         .onAppear {
             isFollowing = appModel.isSourceSelected(source)
+            loadContent()
+        }
+        .refreshable {
+            await refreshContent()
         }
         .accessibilityIdentifier("SourceView-\(source.name)")
+    }
+    
+    /// Load content from the source
+    private func loadContent() {
+        // If we're already loading, don't start another request
+        guard !isLoading else { return }
+        
+        // Set loading state
+        isLoading = true
+        errorMessage = nil
+        
+        // Clear the content items array if we're not refreshing
+        contentItems = []
+        
+        // Use Task to handle async loading
+        Task {
+            do {
+                // Load content asynchronously
+                contentItems = try await appModel.getContentForSource(source)
+                errorMessage = nil
+            } catch {
+                // Handle error
+                errorMessage = error.localizedDescription
+            }
+            
+            // Update UI on main thread
+            await MainActor.run {
+                isLoading = false
+            }
+        }
+    }
+    
+    /// Refresh content asynchronously
+    private func refreshContent() async {
+        // Set loading state
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            // Load content asynchronously
+            contentItems = try await appModel.getContentForSource(source)
+            errorMessage = nil
+        } catch {
+            // Handle error
+            errorMessage = error.localizedDescription
+        }
+        
+        // Update UI on main thread
+        await MainActor.run {
+            isLoading = false
+        }
     }
     
     // MARK: - UI Components

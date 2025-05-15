@@ -169,10 +169,13 @@ class AppModel {
     /// iTunes Search API service for podcast searches
     private let itunesSearchService = ITunesSearchService()
     
-    /// Search for sources by query and type (with real iTunes API for podcasts)
+    /// Reddit API service for subreddit searches
+    private let redditAPIService = RedditAPIService()
+    
+    /// Search for sources by query and type (with real APIs for podcasts and Reddit)
     func searchSources(query: String, type: SourceType) -> [Source] {
-        // For podcasts, we return an empty array since search will be handled asynchronously
-        if type == .podcast {
+        // For podcasts and Reddit, we return an empty array since search will be handled asynchronously
+        if type == .podcast || type == .reddit {
             return []
         }
         
@@ -182,11 +185,6 @@ class AppModel {
             return [
                 Source(name: "Tech News Daily", type: .article, description: "Your daily dose of tech news and analysis.", handle: nil),
                 Source(name: "Ars Technica", type: .article, description: "Technology news, reviews, and analysis.", handle: nil)
-            ]
-        case .reddit:
-            return [
-                Source(name: "r/AskScience", type: .reddit, description: "Ask questions about science and get answers from experts.", handle: "r/AskScience"),
-                Source(name: "r/TechSupport", type: .reddit, description: "Community for technical support questions.", handle: "r/TechSupport")
             ]
         case .bluesky:
             return [
@@ -198,8 +196,8 @@ class AppModel {
                 Source(name: "Open Source News", type: .mastodon, description: "Updates from the open source community.", handle: "@opensource@mastodon.social"),
                 Source(name: "Tech Policy", type: .mastodon, description: "Analysis of tech policy and regulations.", handle: "@techpolicy@mastodon.social")
             ]
-        case .podcast:
-            // This should never be reached as we handle this case above
+        case .reddit, .podcast:
+            // This should never be reached as we handle these cases above
             return []
         }
     }
@@ -219,6 +217,49 @@ class AppModel {
         return try await itunesSearchService.searchPodcasts(query: query, limit: 20)
     }
     
+    /// Search for subreddits using the Reddit API
+    /// - Parameters:
+    ///   - query: The search term
+    ///   - completion: Closure that will be called with the results or error
+    func searchSubreddits(query: String, completion: @escaping (Result<[Source], Error>) -> Void) {
+        redditAPIService.searchSubreddits(query: query, limit: 20, completion: completion)
+    }
+    
+    /// Search for subreddits using the Reddit API with async/await
+    /// - Parameter query: The search term
+    /// - Returns: Array of Source objects representing subreddits
+    func searchSubreddits(query: String) async throws -> [Source] {
+        return try await redditAPIService.searchSubreddits(query: query, limit: 20)
+    }
+    
+    /// Fetch content for a subreddit
+    /// - Parameters:
+    ///   - subreddit: The subreddit source
+    /// - Returns: Array of ContentItem objects representing posts
+    func fetchSubredditContent(subreddit: Source) async throws -> [ContentItem] {
+        // Extract the subreddit name from the handle
+        guard let handle = subreddit.handle, handle.starts(with: "r/") else {
+            // If no handle or wrong format, return empty array
+            return []
+        }
+        
+        do {
+            // Try to fetch content from the API
+            return try await redditAPIService.fetchSubredditContent(subredditName: handle)
+        } catch {
+            print("Error fetching Reddit content: \(error.localizedDescription)")
+            
+            // If we're in DEBUG mode, return some sample content for testing
+            #if DEBUG
+            print("Returning sample content for Reddit in DEBUG mode")
+            return ContentItem.samplesForSource(subreddit)
+            #else
+            // In production, rethrow the error
+            throw error
+            #endif
+        }
+    }
+    
     /// Toggle a source's prioritized state in the daily summary
     func toggleSourcePrioritization(_ source: Source) {
         if prioritizedSources.contains(source.id) {
@@ -235,8 +276,25 @@ class AppModel {
     
 // MARK: - Content Management
     
-    /// Fetch content for a specific source (mocked implementation)
+    /// Fetch content for a specific source
     func getContentForSource(_ source: Source) -> [ContentItem] {
+        // For now, we'll use sample data for all sources
+        // In a real app, we would make API calls here based on source type
         return ContentItem.samplesForSource(source)
+    }
+    
+    /// Fetch content for a specific source with async/await support
+    /// - Parameter source: The source to fetch content for
+    /// - Returns: Array of ContentItem objects
+    func getContentForSource(_ source: Source) async throws -> [ContentItem] {
+        // Based on source type, fetch from appropriate API
+        switch source.type {
+        case .reddit:
+            // For Reddit sources, use the Reddit API
+            return try await fetchSubredditContent(subreddit: source)
+        default:
+            // For other types, use sample data for now
+            return ContentItem.samplesForSource(source)
+        }
     }
 }
