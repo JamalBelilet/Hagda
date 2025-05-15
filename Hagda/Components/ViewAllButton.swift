@@ -25,6 +25,7 @@ struct ViewAllButton: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 4)
+        .listRowSeparatorTint(.clear, edges: .bottom) // Hide just the bottom separator
     }
 }
 
