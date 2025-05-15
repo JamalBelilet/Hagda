@@ -27,7 +27,7 @@ struct FeedView: View {
         .toolbar {
             #if os(iOS) || os(visionOS)
             ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink(destination: CombinedLibraryView()) {
+                NavigationLink(value: "library") {
                     Image(systemName: "plus")
                         .font(.system(size: 18))
                         .accessibilityIdentifier("SourcesButton")
@@ -35,7 +35,7 @@ struct FeedView: View {
             }
             #else
             ToolbarItem {
-                NavigationLink(destination: CombinedLibraryView()) {
+                NavigationLink(value: "library") {
                     Image(systemName: "plus")
                         .font(.system(size: 18))
                         .accessibilityIdentifier("SourcesButton")
@@ -44,6 +44,14 @@ struct FeedView: View {
             #endif
         }
         .searchable(text: $searchText, prompt: "Search")
+        .navigationDestination(for: String.self) { value in
+            if value == "library" {
+                CombinedLibraryView()
+            }
+        }
+        .navigationDestination(for: Source.self) { source in
+            SourceView(source: source)
+        }
     }
     
     // MARK: - UI Components
@@ -76,12 +84,9 @@ struct FeedView: View {
                     icon: "bookmark"
                 )
             }
-            .background(
-                NavigationLink("", isActive: $showContinueAll) {
-                    ContinueReadingView()
-                }
-                .opacity(0)
-            )
+            .navigationDestination(isPresented: $showContinueAll) {
+                ContinueReadingView()
+            }
             .headerProminence(.increased)
             
             // Top Content Section
@@ -90,6 +95,7 @@ struct FeedView: View {
                 
                 // View All button at bottom of section - it's the last item so no bottom separator needed
                 ViewAllButton(title: "Trending", action: { showTrendingAll = true })
+
             } header: {
                 SectionHeaderView(
                     title: "Trending Now",
@@ -97,12 +103,9 @@ struct FeedView: View {
                     icon: "star"
                 )
             }
-            .background(
-                NavigationLink("", isActive: $showTrendingAll) {
-                    TrendingContentView()
-                }
-                .opacity(0)
-            )
+            .navigationDestination(isPresented: $showTrendingAll) {
+                TrendingContentView()
+            }
             .headerProminence(.increased)
             
             // Group sources by type
@@ -191,7 +194,7 @@ struct FeedView: View {
     
     /// Creates a navigation link for a source
     private func sourceNavigationLink(for source: Source) -> some View {
-        NavigationLink(destination: SourceView(source: source)) {
+        NavigationLink(value: source) {
             SourceRowView(source: source)
                 .accessibilityIdentifier("FeedSource-\(source.name)")
         }
