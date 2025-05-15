@@ -79,7 +79,8 @@ struct FeedView: View {
                 SectionHeaderView(
                     title: "Trending Now",
                     description: "Popular content from your sources",
-                    icon: "star"
+                    icon: "star",
+                    destination: { AnyView(TrendingContentView()) }
                 )
             }
             .headerProminence(.increased)
