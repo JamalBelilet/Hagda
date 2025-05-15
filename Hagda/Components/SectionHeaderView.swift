@@ -6,16 +6,10 @@ struct SectionHeaderView: View {
     let description: String
     let icon: String
     var destination: (() -> AnyView)? = nil
+    var viewAllAction: (() -> Void)? = nil
     
     var body: some View {
-        if let destination = destination {
-            NavigationLink(destination: destination()) {
-                headerContent
-            }
-            .buttonStyle(.plain)
-        } else {
-            headerContent
-        }
+        headerContent
     }
     
     private var headerContent: some View {
@@ -29,12 +23,23 @@ struct SectionHeaderView: View {
                     .font(.headline)
                     .fontWeight(.bold)
                 
-                if destination != nil {
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                Spacer()
+                
+                if destination != nil || viewAllAction != nil {
+                    Button(action: {
+                        if let action = viewAllAction {
+                            action()
+                        } else if let dest = destination {
+                            // This will be handled by a navigation link in the parent view
+                        }
+                    }) {
+                        Text("View All")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.accentColor)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("ViewAll-\(title)")
                 }
             }
             

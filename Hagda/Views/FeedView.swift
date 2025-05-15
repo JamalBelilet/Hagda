@@ -5,6 +5,8 @@ struct FeedView: View {
     // MARK: - Properties
     
     @State private var searchText = ""
+    @State private var showContinueAll = false
+    @State private var showTrendingAll = false
     @Environment(AppModel.self) private var appModel
     
     // MARK: - Body
@@ -67,9 +69,15 @@ struct FeedView: View {
                     title: "Continue",
                     description: "Resume where you left off",
                     icon: "bookmark",
-                    destination: { AnyView(ContinueReadingView()) }
+                    viewAllAction: { showContinueAll = true }
                 )
             }
+            .background(
+                NavigationLink("", isActive: $showContinueAll) {
+                    ContinueReadingView()
+                }
+                .opacity(0)
+            )
             .headerProminence(.increased)
             
             // Top Content Section
@@ -80,9 +88,15 @@ struct FeedView: View {
                     title: "Trending Now",
                     description: "Popular content from your sources",
                     icon: "star",
-                    destination: { AnyView(TrendingContentView()) }
+                    viewAllAction: { showTrendingAll = true }
                 )
             }
+            .background(
+                NavigationLink("", isActive: $showTrendingAll) {
+                    TrendingContentView()
+                }
+                .opacity(0)
+            )
             .headerProminence(.increased)
             
             // Group sources by type
