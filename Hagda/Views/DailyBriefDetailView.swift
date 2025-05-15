@@ -3,6 +3,7 @@ import SwiftUI
 /// A view that displays detailed information about the daily brief
 struct DailyBriefDetailView: View {
     @Environment(AppModel.self) private var appModel
+    @State private var showingSettings = false
     
     // Mock summary text segments with their associated sources
     private struct BriefSegment {
@@ -25,6 +26,20 @@ struct DailyBriefDetailView: View {
             .padding()
         }
         .navigationTitle("Today's Brief Details")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    // Show settings sheet
+                    showSettings()
+                } label: {
+                    Image(systemName: "gearshape")
+                        .foregroundColor(.accentColor)
+                }
+            }
+        }
+        .sheet(isPresented: $showingSettings) {
+            settingsSheet
+        }
         .onAppear {
             // Generate mock data when the view appears
             generateMockBriefData()
@@ -198,6 +213,35 @@ struct DailyBriefDetailView: View {
         
         // Update state
         briefSegments = segments
+    }
+    
+    // Show settings sheet
+    private func showSettings() {
+        showingSettings = true
+    }
+}
+
+// MARK: - Sheet Modifier
+extension DailyBriefDetailView {
+    /// Add settings sheet to the view
+    private var settingsSheet: some View {
+        NavigationStack {
+            DailySummarySettingsView()
+                .navigationTitle("Customize Your Brief")
+                #if os(iOS) || os(visionOS)
+                .navigationBarTitleDisplayMode(.inline)
+                #endif
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            showingSettings = false
+                        }
+                    }
+                }
+        }
+        #if os(iOS) || os(visionOS)
+        .presentationDetents([.medium, .large])
+        #endif
     }
 }
 

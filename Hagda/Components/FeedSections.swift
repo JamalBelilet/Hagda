@@ -27,8 +27,7 @@ struct DailySummaryView: View {
                     Button {
                         showingSettings = true
                     } label: {
-                        Image(systemName: "pencil.circle")
-                            .font(.title3)
+                        Image(systemName: "gearshape")
                             .foregroundColor(.accentColor)
                     }
                     .buttonStyle(.plain)
