@@ -1,10 +1,14 @@
 import SwiftUI
 
+// Import the Notification.Name extension from FeedView
+@_implementationOnly import class Foundation.NotificationCenter
+
 // MARK: - Daily Summary Section
 
 /// A view that displays a personalized daily summary of content
 struct DailySummaryView: View {
     @Environment(AppModel.self) private var appModel
+    @State private var showingSettings = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -16,8 +20,14 @@ struct DailySummaryView: View {
                 
                 Spacer()
                 
-                Image(systemName: "sun.max.fill")
-                    .foregroundStyle(.yellow)
+                Button {
+                    showingSettings = true
+                } label: {
+                    Image(systemName: "pencil.circle")
+                        .font(.title3)
+                        .foregroundColor(.accentColor)
+                }
+                .buttonStyle(.plain)
             }
             
             // Summary text
@@ -27,7 +37,7 @@ struct DailySummaryView: View {
             
             // Sources attribution
             HStack(spacing: 0) {
-                Text("Based on ")
+                Text("Curated from ")
                 Text(generateSourceAttribution())
                     .foregroundStyle(.secondary)
             }
@@ -35,10 +45,29 @@ struct DailySummaryView: View {
             .padding(.top, 4)
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Color.gray.opacity(0.2))
         .cornerRadius(12)
         .padding(.vertical, 4)
         .accessibilityIdentifier("DailySummary")
+        .sheet(isPresented: $showingSettings) {
+            NavigationStack {
+                DailySummarySettingsView()
+                    .navigationTitle("Customize Your Brief")
+                    #if os(iOS) || os(visionOS)
+                    .navigationBarTitleDisplayMode(.inline)
+                    #endif
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") {
+                                showingSettings = false
+                            }
+                        }
+                    }
+            }
+            #if os(iOS) || os(visionOS)
+            .presentationDetents([.medium, .large])
+            #endif
+        }
     }
     
     // Current date string
@@ -53,34 +82,114 @@ struct DailySummaryView: View {
         let sourceCount = appModel.feedSources.count
         
         if sourceCount == 0 {
-            return "Welcome to your daily summary! Add sources to get personalized updates and highlights from your favorite content."
+            return "Add sources to receive tailored technology updates from content that matters to you."
         }
         
-        let hasArticles = appModel.feedSources.contains(where: { $0.type == .article })
-        let hasReddit = appModel.feedSources.contains(where: { $0.type == .reddit })
-        let hasSocial = appModel.feedSources.contains(where: { $0.type == .bluesky || $0.type == .mastodon })
-        let hasPodcast = appModel.feedSources.contains(where: { $0.type == .podcast })
+        // Apply settings for content length
+        let summaryFactor: Double
+        switch appModel.dailySummarySettings.summaryLength {
+        case .short:
+            summaryFactor = 0.5
+        case .medium:
+            summaryFactor = 1.0
+        case .long:
+            summaryFactor = 1.5
+        }
+        
+        // Get prioritized sources and organize by type
+        let prioritizedSources = appModel.feedSources.filter { appModel.isSourcePrioritized($0) }
+        let standardSources = appModel.feedSources.filter { !appModel.isSourcePrioritized($0) }
+        
+        // Determine which types we have based on prioritized sources first
+        var sourcesToConsider = appModel.feedSources
+        
+        // If we're using priority sort, arrange priority sources first
+        if appModel.dailySummarySettings.sortingOrder == .priority && !prioritizedSources.isEmpty {
+            sourcesToConsider = prioritizedSources + standardSources
+        }
+        
+        let hasArticles = sourcesToConsider.contains(where: { $0.type == .article })
+        let hasReddit = sourcesToConsider.contains(where: { $0.type == .reddit })
+        let hasSocial = sourcesToConsider.contains(where: { $0.type == .bluesky || $0.type == .mastodon })
+        let hasPodcast = sourcesToConsider.contains(where: { $0.type == .podcast })
         
         var summaryParts: [String] = []
         
+        // Include today's events if enabled
+        if appModel.dailySummarySettings.includeTodayEvents {
+        }
+        
+        // Prioritize source types from prioritized sources
         if hasArticles {
-            summaryParts.append("In tech news today, there's significant interest in AI developments, with several articles highlighting breakthroughs in natural language processing and computer vision applications.")
+            let articlePart = "AI and quantum computing convergence is rapidly accelerating, with real-world enterprise applications now emerging across industries."
+            
+            // Add prioritized source detail if there's an article source prioritized
+            let hasPrioritizedArticle = prioritizedSources.contains(where: { $0.type == .article })
+            if hasPrioritizedArticle && appModel.dailySummarySettings.summarizeSource {
+                let priorityArticleSources = prioritizedSources.filter { $0.type == .article }
+                let priorityNames = priorityArticleSources.map { $0.name }.joined(separator: " and ")
+                summaryParts.append("\(articlePart) \(priorityNames) features extensive coverage on this topic.")
+            } else {
+                summaryParts.append(articlePart)
+            }
         }
         
         if hasReddit {
-            summaryParts.append("Reddit communities are discussing the latest framework updates, with developers sharing success stories and practical implementation tips.")
+            let redditPart = "IT and security team convergence is trending in cybersecurity discussions, with implementation strategies and risk mitigation approaches being shared."
+            
+            // Add prioritized source detail if there's a Reddit source prioritized
+            let hasPrioritizedReddit = prioritizedSources.contains(where: { $0.type == .reddit })
+            if hasPrioritizedReddit && appModel.dailySummarySettings.summarizeSource {
+                let priorityRedditSources = prioritizedSources.filter { $0.type == .reddit }
+                let subreddits = priorityRedditSources.map { $0.name }.joined(separator: " and ")
+                summaryParts.append("\(redditPart) \(subreddits) have particularly active discussions today.")
+            } else {
+                summaryParts.append(redditPart)
+            }
         }
         
         if hasSocial {
-            summaryParts.append("On social media, tech influencers are debating the merits of new development tools and sharing insights about upcoming tech conferences.")
+            let socialPart = "Satellite connectivity for smartphones is gaining traction, promising to transform rural connectivity and emergency services."
+            
+            // Add prioritized source detail if there's a social source prioritized
+            let hasPrioritizedSocial = prioritizedSources.contains(where: { $0.type == .bluesky || $0.type == .mastodon })
+            if hasPrioritizedSocial && appModel.dailySummarySettings.summarizeSource {
+                let prioritySocialSources = prioritizedSources.filter { $0.type == .bluesky || $0.type == .mastodon }
+                let accounts = prioritySocialSources.map { $0.name }.joined(separator: " and ")
+                summaryParts.append("\(socialPart) \(accounts) posted notable updates on this subject.")
+            } else {
+                summaryParts.append(socialPart)
+            }
         }
         
         if hasPodcast {
-            summaryParts.append("Recent podcast episodes cover interviews with industry pioneers and deep dives into evolving technology trends.")
+            let podcastPart = "Generative AI's capability across multiple modalities is evolving rapidly, significantly impacting content creation and organizational productivity."
+            
+            // Add prioritized source detail if there's a podcast source prioritized
+            let hasPrioritizedPodcast = prioritizedSources.contains(where: { $0.type == .podcast })
+            if hasPrioritizedPodcast && appModel.dailySummarySettings.summarizeSource {
+                let priorityPodcastSources = prioritizedSources.filter { $0.type == .podcast }
+                let shows = priorityPodcastSources.map { $0.name }.joined(separator: " and ")
+                summaryParts.append("\(podcastPart) \(shows) released new episodes worth listening to.")
+            } else {
+                summaryParts.append(podcastPart)
+            }
         }
         
         if summaryParts.isEmpty {
-            return "Your summary is being prepared. Add more sources to get a richer daily briefing tailored to your interests."
+            return "Add more sources for a richer daily technology overview tailored to your interests."
+        }
+        
+        // Adjust summary length based on settings
+        if summaryFactor < 1.0 && summaryParts.count > 1 {
+            // For short summaries, just take the first 1-2 parts
+            let itemsToKeep = max(1, Int(Double(summaryParts.count) * summaryFactor))
+            summaryParts = Array(summaryParts.prefix(itemsToKeep))
+        } else if summaryFactor > 1.0 {
+            // For long summaries, add additional detail
+            if appModel.dailySummarySettings.sortingOrder == .trending {
+                summaryParts.append("Key trends: post-quantum cryptography, augmented connected workforce, and sustainable technology practices.")
+            }
         }
         
         return summaryParts.joined(separator: " ")
@@ -94,7 +203,31 @@ struct DailySummaryView: View {
             return "your followed sources"
         }
         
-        let sourceNames = allSources.prefix(3).map { $0.name }
+        // Sort sources for attribution - prioritized first, then others
+        let sourcesToShow: [Source]
+        
+        if appModel.dailySummarySettings.sortingOrder == .priority {
+            // Get prioritized sources first
+            let prioritizedSources = allSources.filter { appModel.isSourcePrioritized($0) }
+            let otherSources = allSources.filter { !appModel.isSourcePrioritized($0) }
+            
+            // If we have prioritized sources, show them first
+            if !prioritizedSources.isEmpty {
+                sourcesToShow = prioritizedSources + otherSources
+            } else {
+                sourcesToShow = allSources
+            }
+        } else {
+            sourcesToShow = allSources
+        }
+        
+        let sourceNames = sourcesToShow.prefix(3).map { source in
+            if appModel.isSourcePrioritized(source) {
+                return "\(source.name)★" // Add star for prioritized sources
+            } else {
+                return source.name
+            }
+        }
         
         if allSources.count <= 3 {
             return sourceNames.joined(separator: ", ")
@@ -110,28 +243,71 @@ struct DailySummaryView: View {
 struct ContinueItemsView: View {
     @Environment(AppModel.self) private var appModel
     @State private var continueItems: [ContentItem] = []
+    @State private var isRefreshing = false
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 0) {
             if continueItems.isEmpty {
                 emptyStateView
             } else {
                 ForEach(continueItems) { item in
-                    NavigationLink(destination: ContentDetailView(item: item)) {
-                        continueItemRow(for: item)
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Main row with content and progress
+                        NavigationLink(destination: ContentDetailView(item: item)) {
+                            continueItemRow(for: item)
+                                .padding(.bottom, 12)
+                        }
+                        .buttonStyle(.plain)
+                        
+                        // Preview of remaining content - always shown
+                        RemainingContentPreview(item: item)
+                        
+                        // Add spacing after the entire item
+                        if item != continueItems.last {
+                            Divider()
+                                .padding(.vertical, 10)
+                        }
                     }
-                    .buttonStyle(.plain)
-                    
-                    if item != continueItems.last {
-                        Divider()
-                    }
+                    .padding(.bottom, 16)
                 }
             }
         }
+        .refreshable {
+            await refreshContinueItems()
+        }
         .onAppear {
             // Generate mocked continue items
-            continueItems = generateMockContinueItems()
+            loadContent()
+            
+            // Set up notification observer for feed refreshes
+            setupNotificationObserver()
         }
+    }
+    
+    // Setup notification observer for feed refreshes
+    private func setupNotificationObserver() {
+        NotificationCenter.default.addObserver(
+            forName: .feedRefreshed,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // When the feed is refreshed, update our content
+            loadContent()
+        }
+    }
+    
+    // Load content items
+    private func loadContent() {
+        continueItems = generateMockContinueItems()
+    }
+    
+    // Refresh continue items - simulates a network request with async
+    private func refreshContinueItems() async {
+        // Simulate network delay
+        try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
+        
+        // Generate new items
+        continueItems = generateMockContinueItems()
     }
     
     // Row for a continue item with progress indicator
@@ -140,7 +316,7 @@ struct ContinueItemsView: View {
             // Type icon with progress circle
             ZStack {
                 Circle()
-                    .stroke(Color(.systemGray4), lineWidth: 2)
+                    .stroke(Color.gray.opacity(0.4), lineWidth: 2)
                     .frame(width: 44, height: 44)
                 
                 Circle()
@@ -158,6 +334,7 @@ struct ContinueItemsView: View {
                 Text(item.title)
                     .font(.headline)
                     .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(item.subtitle)
                     .font(.subheadline)
@@ -180,9 +357,55 @@ struct ContinueItemsView: View {
             
             Spacer()
         }
-        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .padding(.vertical, 6)
     }
+}
+
+/// Displays a preview of the remaining content for a partially consumed item
+struct RemainingContentPreview: View {
+    let item: ContentItem
     
+    var body: some View {
+        VStack(spacing: 12) {
+            // Header with title and info that mimics the chevron UI
+            HStack {
+                Text(item.remainingContentTitle)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Spacer()
+                
+                Text(item.remainingContentInfo)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 16)
+            
+            // Content preview
+            Text(item.remainingContentSummary)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineSpacing(4)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            #if os(iOS) || os(visionOS)
+            .background(Color(.secondarySystemBackground))
+            #else
+            .background(Color.gray.opacity(0.15))
+            #endif
+            .cornerRadius(10)
+            .padding(.horizontal, 16)
+        }
+        .padding(.top, 4)
+        .padding(.bottom, 8)
+        .frame(maxWidth: .infinity)
+    }
+}
+
+extension ContinueItemsView {
     // Empty state when no continue items exist
     private var emptyStateView: some View {
         HStack {
@@ -193,10 +416,10 @@ struct ContinueItemsView: View {
                     .font(.system(size: 28))
                     .foregroundStyle(.secondary)
                 
-                Text("Nothing to continue")
+                Text("Continue Reading")
                     .font(.headline)
                 
-                Text("Items you've started reading or listening to will appear here")
+                Text("Content you've started reading or listening to will appear here")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -215,39 +438,76 @@ struct ContinueItemsView: View {
         
         // Generate one item for each content type
         let articleItem = ContentItem(
-            title: "Designing Effective User Interfaces for Mobile Applications",
-            subtitle: "From The Verge • 10 min read",
+            title: "The Evolution of Sustainable Technology: Green Tech in 2024",
+            subtitle: "From ZDNet • 8 min read",
             date: calendar.date(byAdding: .hour, value: -4, to: now) ?? now,
-            type: .article
+            type: .article,
+            contentPreview: """
+            The article continues with key sustainable technology trends of 2024:
+            
+            • How HPE's GreenLake platform is revolutionizing energy-efficient cloud services
+            • The rise of carbon-aware computing and its impact on enterprise IT strategy
+            • Renewable energy innovations powering next-gen data centers
+            • Circular economy principles applied to hardware procurement and disposal
+            """,
+            progressPercentage: 0.35
         )
         
         let podcastItem = ContentItem(
-            title: "Episode 254: The Future of Development Frameworks",
-            subtitle: "All-In • 45 min remaining",
+            title: "The Vergecast: AI's Role in Reshaping Media Consumption",
+            subtitle: "The Vergecast • 30 min remaining",
             date: calendar.date(byAdding: .hour, value: -1, to: now) ?? now,
-            type: .podcast
+            type: .podcast,
+            contentPreview: """
+            Coming up in this episode:
+            
+            • Analysis of how generative AI is changing content creation and consumption
+            • Interview with leading AI researcher on multi-modal models and their capabilities
+            • Discussion on context window size increases and what they mean for real-world applications
+            • Debate on the ethical implications of AI-generated media and potential regulations
+            """,
+            progressPercentage: 0.65
         )
         
-        // Pick two random items to show
-        let potentialItems = [articleItem, podcastItem]
-        return Array(potentialItems.shuffled().prefix(Int.random(in: 0...2)))
+        let redditItem = ContentItem(
+            title: "The IT-Security Convergence: Why Your Organization Needs It",
+            subtitle: "r/cybersecurity • 15 min read",
+            date: calendar.date(byAdding: .hour, value: -6, to: now) ?? now,
+            type: .reddit,
+            contentPreview: """
+            The discussion continues with practical insights:
+            
+            • Case studies of organizations that successfully merged IT and security teams
+            • Key challenges in organizational structure and how to overcome them
+            • Training programs to build cross-functional expertise in both domains
+            • Metrics that show improved security posture after convergence
+            """,
+            progressPercentage: 0.42
+        )
+        
+        // Pick two or three random items to show
+        let potentialItems = [articleItem, podcastItem, redditItem]
+        return Array(potentialItems.shuffled().prefix(Int.random(in: 2...3)))
     }
     
     // Generate progress value for visual indicator
     private func progressValue(for item: ContentItem) -> CGFloat {
-        // Random progress for mock data - in a real app this would be stored
-        return item.type == .article ? 0.35 : 0.65
+        return CGFloat(item.progressPercentage)
     }
     
     // Generate progress text based on content type
     private func progressText(for item: ContentItem) -> String {
         switch item.type {
         case .article:
-            return "35% completed"
+            return "\(Int(item.progressPercentage * 100))% completed"
         case .podcast:
-            return "21:15 remaining"
+            let totalSeconds = 45 * 60 // 45 minutes in seconds
+            let remainingSeconds = Int(Double(totalSeconds) * (1 - item.progressPercentage))
+            let minutes = remainingSeconds / 60
+            let seconds = remainingSeconds % 60
+            return "\(minutes):\(String(format: "%02d", seconds)) remaining"
         default:
-            return "In progress"
+            return "\(Int(item.progressPercentage * 100))% completed"
         }
     }
 }
@@ -274,19 +534,45 @@ struct TopContentView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.leading, 16)
+                    .padding(.trailing, 32)
                 }
+                .padding(.horizontal, -16)
+                .edgesIgnoringSafeArea(.horizontal)
             }
         }
         .onAppear {
-            // Generate mock top items
+            // Load top content
+            loadContent()
+            
+            // Set up notification observer for feed refreshes
+            setupNotificationObserver()
+        }
+    }
+    
+    // Setup notification observer for feed refreshes
+    private func setupNotificationObserver() {
+        NotificationCenter.default.addObserver(
+            forName: .feedRefreshed,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // When the feed is refreshed, update our content
+            loadContent()
+        }
+    }
+    
+    // Load content items
+    private func loadContent() {
+        // Generate mock top items with a slight animation
+        withAnimation(.easeInOut(duration: 0.3)) {
             topItems = generateMockTopItems()
         }
     }
     
     // Card for top content item
     private func topContentCard(for item: ContentItem) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 12) {
             // Header with badge
             HStack {
                 Label {
@@ -321,6 +607,7 @@ struct TopContentView: View {
                 .font(.headline)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
             
             Text(item.subtitle)
                 .font(.caption)
@@ -329,7 +616,7 @@ struct TopContentView: View {
             Spacer()
             
             HStack {
-                Text("Trending Today")
+                Text("Popular Now")
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
@@ -342,8 +629,8 @@ struct TopContentView: View {
             }
         }
         .padding()
-        .frame(width: 280, height: 160)
-        .background(Color(.secondarySystemBackground))
+        .frame(width: 290, height: 160)
+        .background(Color.gray.opacity(0.2))
         .cornerRadius(16)
     }
     
@@ -357,10 +644,10 @@ struct TopContentView: View {
                     .font(.system(size: 28))
                     .foregroundStyle(.secondary)
                 
-                Text("No trending content")
+                Text("Popular Content")
                     .font(.headline)
                 
-                Text("Popular items from your sources will appear here")
+                Text("Trending content from your sources will appear here")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -389,26 +676,40 @@ struct TopContentView: View {
         
         if availableTypes.contains(.article) {
             topItems.append(ContentItem(
-                title: "The Rise of AI-assisted Programming: A Game Changer for Developers",
-                subtitle: "TechCrunch • 4 min read",
+                title: "Quantum Computing in 2024: Real-World Applications Begin to Emerge",
+                subtitle: "Ars Technica • 6 min read",
                 date: calendar.date(byAdding: .hour, value: -8, to: now) ?? now,
+                type: .article
+            ))
+            
+            topItems.append(ContentItem(
+                title: "Generative AI's Evolution: From Text to Multimodal Problem-Solving",
+                subtitle: "MIT Technology Review • 5 min read",
+                date: calendar.date(byAdding: .hour, value: -10, to: now) ?? now,
                 type: .article
             ))
         }
         
         if availableTypes.contains(.reddit) {
             topItems.append(ContentItem(
-                title: "I created a productivity tool that saved our team 10 hours a week",
-                subtitle: "r/programming • 432 upvotes",
+                title: "The convergence of IT and security: Why these teams need to merge in 2024",
+                subtitle: "r/cybersecurity • 3.2k upvotes",
                 date: calendar.date(byAdding: .hour, value: -5, to: now) ?? now,
+                type: .reddit
+            ))
+            
+            topItems.append(ContentItem(
+                title: "Analysis: Satellite connectivity is finally becoming mainstream for smartphones",
+                subtitle: "r/Futurology • 5.6k upvotes",
+                date: calendar.date(byAdding: .hour, value: -7, to: now) ?? now,
                 type: .reddit
             ))
         }
         
         if availableTypes.contains(.bluesky) {
             topItems.append(ContentItem(
-                title: "Just spoke with the team behind the new framework release. Here's what you need to know about the upcoming changes...",
-                subtitle: "@techblogger.bsky.social",
+                title: "Google's May 2024 update is hitting sites hard. Here's my analysis of what's changed and which industries are most affected...",
+                subtitle: "@glenngabe.bsky.social",
                 date: calendar.date(byAdding: .hour, value: -3, to: now) ?? now,
                 type: .bluesky
             ))
@@ -416,14 +717,22 @@ struct TopContentView: View {
         
         if availableTypes.contains(.podcast) {
             topItems.append(ContentItem(
-                title: "How Modern Development Teams Are Using AI: Insights from 50+ Interviews",
-                subtitle: "All-In • Most played episode",
+                title: "Inside the Post-Quantum Cryptography Rush: Why Companies Are Adopting PQC Now",
+                subtitle: "Hard Fork • Latest episode",
                 date: calendar.date(byAdding: .hour, value: -12, to: now) ?? now,
+                type: .podcast
+            ))
+            
+            topItems.append(ContentItem(
+                title: "The Augmented Connected Workforce: Technology's Role in Remote Collaboration",
+                subtitle: "This Week in Tech • Most shared",
+                date: calendar.date(byAdding: .hour, value: -24, to: now) ?? now,
                 type: .podcast
             ))
         }
         
-        return Array(topItems.shuffled().prefix(3))
+        // Return all items to ensure there's always enough content to scroll
+        return topItems
     }
     
     // Metric value for the top item (upvotes, views, etc.)
@@ -467,6 +776,43 @@ struct TopContentView: View {
     ContinueItemsView()
         .environment(AppModel())
         .padding()
+}
+
+#Preview("Remaining Content Preview") {
+    VStack(spacing: 20) {
+        RemainingContentPreview(item: ContentItem(
+            title: "Designing Effective User Interfaces for Mobile Applications",
+            subtitle: "From The Verge • 10 min read",
+            date: Date().addingTimeInterval(-3600 * 4),
+            type: .article,
+            contentPreview: """
+            The article continues with an exploration of mobile UI best practices:
+            
+            • Responsive design principles for different screen sizes
+            • Accessibility considerations for diverse user needs
+            • Color theory and visual hierarchy in mobile interfaces
+            • User testing methodologies for validating design decisions
+            """,
+            progressPercentage: 0.35
+        ))
+        
+        RemainingContentPreview(item: ContentItem(
+            title: "Episode 254: The Future of Development Frameworks",
+            subtitle: "All-In • 45 min remaining",
+            date: Date().addingTimeInterval(-3600 * 1),
+            type: .podcast,
+            contentPreview: """
+            Coming up in this episode:
+            
+            • Discussion on the evolution of frontend frameworks
+            • Interview with the lead architect of a popular framework
+            • Practical tips for migrating between frameworks
+            • Performance optimization strategies for modern web applications
+            """,
+            progressPercentage: 0.65
+        ))
+    }
+    .padding()
 }
 
 #Preview("Top Content") {

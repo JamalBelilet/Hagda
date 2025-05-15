@@ -35,7 +35,7 @@ struct SourceView: View {
         .navigationTitle(source.name)
         .listStyle(.inset)
         .scrollContentBackground(.visible)
-        .background(Color(.systemGroupedBackground))
+        .background(Color(.gray).opacity(0.1))
         .onAppear {
             isFollowing = appModel.isSourceSelected(source)
         }
@@ -50,7 +50,7 @@ struct SourceView: View {
             // Icon and title
             HStack(spacing: 14) {
                 Circle()
-                    .fill(Color(.secondarySystemBackground))
+                    .fill(Color.gray.opacity(0.2))
                     .frame(width: 60, height: 60)
                     .overlay(
                         Image(systemName: source.type.icon)

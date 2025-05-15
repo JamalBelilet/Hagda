@@ -35,31 +35,31 @@ enum SourceType: String, CaseIterable, Identifiable {
     /// Localized search placeholder text for this source type
     var searchPlaceholder: String {
         switch self {
-        case .article: return "Search for news source..."
-        case .reddit: return "Enter subreddit name..."
-        case .bluesky: return "Enter Bluesky handle..."
-        case .mastodon: return "Enter Mastodon handle..."
-        case .podcast: return "Search for podcast..."
+        case .article: return "Find news sources..."
+        case .reddit: return "Find subreddits..."
+        case .bluesky: return "Find Bluesky profiles..."
+        case .mastodon: return "Find Mastodon accounts..."
+        case .podcast: return "Find podcasts..."
         }
     }
     
     /// Default section header title for this source type 
     var sectionTitle: String {
         switch self {
-        case .article: return "Top Tech Articles"
+        case .article: return "Featured Articles"
         case .reddit: return "Reddit Communities"
-        case .bluesky, .mastodon: return "Social Media"
-        case .podcast: return "Tech Podcasts"
+        case .bluesky, .mastodon: return "Social Updates"
+        case .podcast: return "Podcast Episodes"
         }
     }
     
     /// Default section description for this source type
     var sectionDescription: String {
         switch self {
-        case .article: return "Latest articles from tech news sources"
-        case .reddit: return "Trending posts from popular subreddits"
-        case .bluesky, .mastodon: return "Updates from people you follow"
-        case .podcast: return "Latest episodes from your favorite shows"
+        case .article: return "Fresh insights from your favorite publications"
+        case .reddit: return "Hot discussions from communities you follow"
+        case .bluesky, .mastodon: return "Latest posts from profiles you follow"
+        case .podcast: return "New episodes ready for your listening queue"
         }
     }
 }
@@ -86,25 +86,35 @@ extension Source {
     static var sampleSources: [Source] {
         [
             // Articles
-            Source(name: "TechCrunch", type: .article, description: "Breaking technology news, analysis, and opinions.", handle: nil),
-            Source(name: "Wired", type: .article, description: "In-depth articles about the impact of technology on our world.", handle: nil),
-            Source(name: "The Verge", type: .article, description: "Covering the intersection of technology, science, art, and culture.", handle: nil),
+            Source(name: "TechCrunch", type: .article, description: "Leading technology media platform covering startups, tech news, and funding rounds.", handle: nil),
+            Source(name: "The Verge", type: .article, description: "Exploring technology, science, art, and culture with in-depth reporting and reviews.", handle: nil),
+            Source(name: "Ars Technica", type: .article, description: "Expert coverage for 'alpha geeks' on everything from hardware to software and scientific breakthroughs.", handle: nil),
+            Source(name: "ZDNet", type: .article, description: "Business technology news and analysis for IT professionals and decision-makers.", handle: nil),
+            Source(name: "MIT Technology Review", type: .article, description: "Insights on emerging technologies and innovation from one of the oldest tech publications.", handle: nil),
             
             // Reddit
-            Source(name: "r/dataisbeautiful", type: .reddit, description: "A place to share and discuss visualizations of data.", handle: "r/dataisbeautiful"),
-            Source(name: "r/gadgets", type: .reddit, description: "Explore the latest gadgets and technology.", handle: "r/gadgets"),
-            Source(name: "r/programming", type: .reddit, description: "A community for sharing news and tutorials related to programming.", handle: "r/programming"),
-            Source(name: "r/science", type: .reddit, description: "Engage with scientific discoveries, research, and discussions.", handle: "r/science"),
-            Source(name: "r/technology", type: .reddit, description: "The latest news and discussions on technology, gadgets, and startups.", handle: "r/technology"),
+            Source(name: "r/technology", type: .reddit, description: "Comprehensive coverage of tech news, trends, innovations, and industry debates.", handle: "r/technology"),
+            Source(name: "r/Futurology", type: .reddit, description: "Exploring technological breakthroughs and their implications for humanity's future.", handle: "r/Futurology"),
+            Source(name: "r/artificial", type: .reddit, description: "Discussions on AI and machine learning advancements, research, and applications.", handle: "r/artificial"),
+            Source(name: "r/gadgets", type: .reddit, description: "Latest devices, from smartphones to wearables, with reviews and troubleshooting.", handle: "r/gadgets"),
+            Source(name: "r/cybersecurity", type: .reddit, description: "Security news, threats, best practices, and career advice from industry professionals.", handle: "r/cybersecurity"),
+            Source(name: "r/pcgaming", type: .reddit, description: "PC gaming discussions, hardware recommendations, and performance optimization tips.", handle: "r/pcgaming"),
             
             // Bluesky
-            Source(name: "Donnell Wals", type: .bluesky, description: "Creative tech videos and vlogs from Sara Dietschy.", handle: "donnywals.bsky.social"),
+            Source(name: "Aleyda Solis", type: .bluesky, description: "SEO expert sharing industry insights, digital marketing trends, and tech developments.", handle: "aleyda.solis.bsky.social"),
+            Source(name: "Glenn Gabe", type: .bluesky, description: "SEO consultant analyzing Google updates, sharing technical guides and industry research.", handle: "glenngabe.bsky.social"),
+            Source(name: "Crystal Crowder", type: .bluesky, description: "Tech writer covering device tips, emerging trends, and practical digital solutions.", handle: "crystalcrowder.bsky.social"),
             
             // Mastodon
-            Source(name: "TechCrunch", type: .mastodon, description: "Startup and technology news from TechCrunch.", handle: "@TechCrunch on Mastodon"),
+            Source(name: "Eugen Rochko", type: .mastodon, description: "Founder and CEO of Mastodon sharing platform updates and decentralized web insights.", handle: "@Gargron@mastodon.social"),
+            Source(name: "MIT Technology Review", type: .mastodon, description: "Cutting-edge reporting on AI, climate tech, biotechnology, and computing.", handle: "@techreview@mastodon.social"),
+            Source(name: "The Verge", type: .mastodon, description: "Tech journalism covering products, science, and digital culture developments.", handle: "@verge@mastodon.social"),
             
             // Podcasts
-            Source(name: "All-In", type: .podcast, description: "All-In features four best friends discussing everything from tech to politics, business, and beyond.", handle: "by Chamath, Jason, Sacks & Friedberg")
+            Source(name: "This Week in Tech", type: .podcast, description: "Leo Laporte and tech insiders explore the week's hottest tech news every Sunday.", handle: "by Leo Laporte and TWiT.tv"),
+            Source(name: "Hard Fork", type: .podcast, description: "Kevin Roose and Casey Newton dive into pressing questions about AI and tech's impact on society.", handle: "by The New York Times"),
+            Source(name: "The Vergecast", type: .podcast, description: "Making sense of the week's tech news with Nilay Patel and David Pierce.", handle: "by The Verge"),
+            Source(name: "Waveform", type: .podcast, description: "MKBHD's deep dives on consumer tech products, industry news, and behind-the-scenes insights.", handle: "by Marques Brownlee")
         ]
     }
 }

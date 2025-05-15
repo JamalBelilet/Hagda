@@ -1,4 +1,7 @@
 import SwiftUI
+#if os(iOS) || os(visionOS)
+import UIKit
+#endif
 
 /// A detail view for content items with type-specific layouts
 struct ContentDetailView: View {
@@ -29,8 +32,11 @@ struct ContentDetailView: View {
             .padding()
         }
         .navigationTitle("")
+        #if os(iOS) || os(visionOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
+            #if os(iOS) || os(visionOS)
             ToolbarItem(placement: .principal) {
                 HStack {
                     Image(systemName: item.typeIcon)
@@ -47,6 +53,24 @@ struct ContentDetailView: View {
                     Image(systemName: "square.and.arrow.up")
                 }
             }
+            #else
+            ToolbarItem {
+                HStack {
+                    Image(systemName: item.typeIcon)
+                        .foregroundStyle(.secondary)
+                    Text(item.type.displayName)
+                        .font(.headline)
+                }
+            }
+            
+            ToolbarItem {
+                Button(action: {
+                    // Share action would go here
+                }) {
+                    Image(systemName: "square.and.arrow.up")
+                }
+            }
+            #endif
         }
         .accessibilityIdentifier("ContentDetail-\(item.id)")
     }
@@ -85,7 +109,11 @@ struct ArticleDetailView: View {
         VStack(alignment: .leading, spacing: 16) {
             // Article image
             RoundedRectangle(cornerRadius: 8)
+                #if os(iOS) || os(visionOS)
                 .fill(Color(.secondarySystemBackground))
+                #else
+                .fill(Color.gray.opacity(0.2))
+                #endif
                 .aspectRatio(16/9, contentMode: .fit)
                 .overlay(
                     Image(systemName: "newspaper")
@@ -102,6 +130,11 @@ struct ArticleDetailView: View {
                 .font(.body)
                 .lineSpacing(5)
             
+            // Next section preview if we have progress
+            if item.progressPercentage > 0 {
+                upNextSection
+            }
+            
             // Read more button
             Button {
                 // Action to open the full article
@@ -114,7 +147,11 @@ struct ArticleDetailView: View {
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
                 .frame(maxWidth: .infinity)
+                #if os(iOS) || os(visionOS)
                 .background(Color(.secondarySystemBackground))
+                #else
+                .background(Color.gray.opacity(0.2))
+                #endif
                 .foregroundColor(.primary)
                 .cornerRadius(10)
                 .overlay(
@@ -123,6 +160,41 @@ struct ArticleDetailView: View {
                 )
             }
             .padding(.top, 12)
+        }
+    }
+    
+    private var upNextSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Up Next in This Article")
+                .font(.headline)
+                .padding(.top, 8)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(item.remainingContentInfo)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color.accentColor)
+                    
+                    Spacer()
+                    
+                    Text("\(Int(item.progressPercentage * 100))% completed")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Text(item.remainingContentSummary)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(5)
+            }
+            .padding()
+            #if os(iOS) || os(visionOS)
+            .background(Color(.secondarySystemBackground))
+            #else
+            .background(Color.gray.opacity(0.15))
+            #endif
+            .cornerRadius(10)
         }
     }
     
@@ -157,7 +229,11 @@ struct RedditDetailView: View {
                         .fontWeight(.medium)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
+                        #if os(iOS) || os(visionOS)
                         .background(Color(.secondarySystemBackground))
+                        #else
+                        .background(Color.gray.opacity(0.2))
+                        #endif
                         .foregroundColor(.primary)
                         .cornerRadius(10)
                         .overlay(
@@ -175,7 +251,11 @@ struct RedditDetailView: View {
             // Possible image content
             if Bool.random() {
                 RoundedRectangle(cornerRadius: 8)
+                    #if os(iOS) || os(visionOS)
                     .fill(Color(.secondarySystemBackground))
+                    #else
+                    .fill(Color.gray.opacity(0.2))
+                    #endif
                     .frame(height: 200)
                     .overlay(
                         Image(systemName: "photo")
@@ -233,7 +313,11 @@ struct RedditDetailView: View {
                             .font(.subheadline)
                     }
                     .padding()
+                    #if os(iOS) || os(visionOS)
                     .background(Color(.secondarySystemBackground))
+                    #else
+                    .background(Color.gray.opacity(0.2))
+                    #endif
                     .cornerRadius(8)
                 }
             }
@@ -254,7 +338,11 @@ struct SocialDetailView: View {
             // User info
             HStack(spacing: 10) {
                 Circle()
+                    #if os(iOS) || os(visionOS)
                     .fill(Color(.secondarySystemBackground))
+                    #else
+                    .fill(Color.gray.opacity(0.2))
+                    #endif
                     .frame(width: 48, height: 48)
                     .overlay(
                         Image(systemName: "person")
@@ -287,7 +375,11 @@ struct SocialDetailView: View {
             // Optional image
             if Bool.random() {
                 RoundedRectangle(cornerRadius: 8)
+                    #if os(iOS) || os(visionOS)
                     .fill(Color(.secondarySystemBackground))
+                    #else
+                    .fill(Color.gray.opacity(0.2))
+                    #endif
                     .frame(height: 200)
                     .overlay(
                         Image(systemName: "photo")
@@ -332,7 +424,11 @@ struct SocialDetailView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack(spacing: 10) {
                             Circle()
+                                #if os(iOS) || os(visionOS)
                                 .fill(Color(.secondarySystemBackground))
+                                #else
+                                .fill(Color.gray.opacity(0.2))
+                                #endif
                                 .frame(width: 36, height: 36)
                                 .overlay(
                                     Image(systemName: "person")
@@ -362,7 +458,11 @@ struct SocialDetailView: View {
                             .font(.subheadline)
                     }
                     .padding()
+                    #if os(iOS) || os(visionOS)
                     .background(Color(.secondarySystemBackground))
+                    #else
+                    .background(Color.gray.opacity(0.2))
+                    #endif
                     .cornerRadius(8)
                 }
             }
@@ -374,14 +474,17 @@ struct SocialDetailView: View {
 struct PodcastDetailView: View {
     let item: ContentItem
     @State private var isPlaying = false
-    @State private var progress = 0.3
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Episode artwork
             ZStack(alignment: .bottomTrailing) {
                 RoundedRectangle(cornerRadius: 12)
+                    #if os(iOS) || os(visionOS)
                     .fill(Color(.secondarySystemBackground))
+                    #else
+                    .fill(Color.gray.opacity(0.2))
+                    #endif
                     .aspectRatio(1, contentMode: .fit)
                     .overlay(
                         Image(systemName: "headphones")
@@ -392,7 +495,11 @@ struct PodcastDetailView: View {
                 Text(item.subtitle.contains("minutes") ? item.subtitle : "45 minutes • Interview")
                     .font(.caption)
                     .padding(8)
+                    #if os(iOS) || os(visionOS)
                     .background(.ultraThinMaterial)
+                    #else
+                    .background(Color.gray.opacity(0.15))
+                    #endif
                     .cornerRadius(8)
                     .padding(12)
             }
@@ -406,19 +513,28 @@ struct PodcastDetailView: View {
                 .font(.body)
                 .lineSpacing(5)
             
+            // What's coming up next section
+            if item.progressPercentage > 0 {
+                comingUpNextSection
+            }
+            
             // Player controls
             VStack(spacing: 12) {
                 // Progress bar
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         Rectangle()
+                            #if os(iOS) || os(visionOS)
                             .fill(Color(.systemGray5))
+                            #else
+                            .fill(Color.gray.opacity(0.2))
+                            #endif
                             .frame(height: 4)
                             .cornerRadius(2)
                         
                         Rectangle()
                             .fill(Color.accentColor)
-                            .frame(width: geometry.size.width * progress, height: 4)
+                            .frame(width: geometry.size.width * CGFloat(item.progressPercentage), height: 4)
                             .cornerRadius(2)
                         
                         Circle()
@@ -429,20 +545,20 @@ struct PodcastDetailView: View {
                                 Circle()
                                     .stroke(Color.accentColor, lineWidth: 2)
                             )
-                            .offset(x: geometry.size.width * progress - 7)
+                            .offset(x: geometry.size.width * CGFloat(item.progressPercentage) - 7)
                     }
                 }
                 .frame(height: 20)
                 
                 // Time indicators
                 HStack {
-                    Text(formatTime(seconds: Int(1800 * progress)))
+                    Text(formatTime(seconds: Int(1800 * item.progressPercentage)))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     
                     Spacer()
                     
-                    Text("-\(formatTime(seconds: Int(1800 * (1 - progress))))")
+                    Text("-\(formatTime(seconds: Int(1800 * (1 - item.progressPercentage))))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -488,7 +604,11 @@ struct PodcastDetailView: View {
                         Text("1.0x")
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
+                            #if os(iOS) || os(visionOS)
                             .background(Color(.secondarySystemBackground))
+                            #else
+                            .background(Color.gray.opacity(0.2))
+                            #endif
                             .cornerRadius(6)
                     }
                     
@@ -529,9 +649,44 @@ struct PodcastDetailView: View {
                     }
                 }
                 .padding()
+                #if os(iOS) || os(visionOS)
                 .background(Color(.secondarySystemBackground))
+                #else
+                .background(Color.gray.opacity(0.2))
+                #endif
                 .cornerRadius(8)
             }
+        }
+    }
+    
+    private var comingUpNextSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Coming Up Next")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                Text(item.remainingContentInfo)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.top, 8)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text(item.remainingContentSummary)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(5)
+            }
+            .padding()
+            #if os(iOS) || os(visionOS)
+            .background(Color(.secondarySystemBackground))
+            #else
+            .background(Color.gray.opacity(0.15))
+            #endif
+            .cornerRadius(10)
         }
     }
     
@@ -558,7 +713,16 @@ struct PodcastDetailView: View {
             title: "The Future of AI Development: What's Next in 2025",
             subtitle: "By John Smith • TechCrunch",
             date: Date().addingTimeInterval(-3600 * 5), // 5 hours ago
-            type: .article
+            type: .article,
+            contentPreview: """
+            The article continues with an exploration of advanced AI algorithms and their real-world applications:
+            
+            • Case studies of successful AI implementations in enterprise
+            • Technical breakdown of transformer architecture advancements
+            • Ethical considerations for AI deployment
+            • Future predictions from leading researchers
+            """,
+            progressPercentage: 0.35
         ))
     }
 }
@@ -569,7 +733,9 @@ struct PodcastDetailView: View {
             title: "I built this cool app to track my programming habits",
             subtitle: "Posted by u/dev_enthusiast • r/programming • 42 comments",
             date: Date().addingTimeInterval(-3600 * 24), // 1 day ago
-            type: .reddit
+            type: .reddit,
+            contentPreview: "The post continues with implementation details and includes code snippets showing how the tracking mechanism works. Several users have shared their own approaches in the comments.",
+            progressPercentage: 0.40
         ))
     }
 }
@@ -580,7 +746,9 @@ struct PodcastDetailView: View {
             title: "Just shipped a major update to our app! Would love your feedback on the new UI and performance improvements.",
             subtitle: "@techcreator.bsky.social",
             date: Date().addingTimeInterval(-3600 * 3), // 3 hours ago
-            type: .bluesky
+            type: .bluesky,
+            contentPreview: "The thread continues with details about the technical challenges overcome and a link to the release notes. Several users have already provided positive feedback.",
+            progressPercentage: 0.25
         ))
     }
 }
@@ -591,7 +759,16 @@ struct PodcastDetailView: View {
             title: "Episode 245: The State of Modern Development",
             subtitle: "45 minutes • Interview",
             date: Date().addingTimeInterval(-3600 * 36), // 1.5 days ago
-            type: .podcast
+            type: .podcast,
+            contentPreview: """
+            Coming up in this episode:
+            
+            • Interview with the lead architect of a popular framework
+            • Discussion on performance optimization techniques
+            • Q&A segment addressing common developer questions
+            • Resource recommendations and tools for modern developers
+            """,
+            progressPercentage: 0.65
         ))
     }
 }

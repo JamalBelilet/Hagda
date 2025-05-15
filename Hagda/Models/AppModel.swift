@@ -1,6 +1,31 @@
 import Foundation
 import SwiftUI
 
+/// Settings for the daily summary view
+struct DailySummarySettings {
+    var showWeather: Bool = true
+    var includeTodayEvents: Bool = true
+    var summarizeSource: Bool = true
+    var summaryLength: SummaryLength = .medium
+    var sortingOrder: SummarySort = .newest
+    
+    enum SummaryLength: String, CaseIterable, Identifiable {
+        case short = "Short"
+        case medium = "Medium"
+        case long = "Long"
+        
+        var id: String { rawValue }
+    }
+    
+    enum SummarySort: String, CaseIterable, Identifiable {
+        case newest = "Newest First"
+        case trending = "Trending"
+        case priority = "Priority Sources"
+        
+        var id: String { rawValue }
+    }
+}
+
 /// The main application model that manages sources and user selections
 @Observable
 class AppModel {
@@ -11,6 +36,12 @@ class AppModel {
     
     /// IDs of sources selected by the user to appear in their feed
     var selectedSources: Set<UUID> = []
+    
+    /// IDs of sources prioritized by the user in daily summary
+    var prioritizedSources: Set<UUID> = []
+    
+    /// Daily summary settings
+    var dailySummarySettings = DailySummarySettings()
     
     /// Flag for UI testing mode
     var isTestingMode: Bool = false
@@ -55,6 +86,11 @@ class AppModel {
         return result
     }
     
+    // MARK: - Shared Instance
+    
+    /// Shared instance for the app model
+    static let shared = AppModel()
+    
     // MARK: - Initialization
     
     init(isTestingMode: Bool = false) {
@@ -75,6 +111,33 @@ class AppModel {
             if let secondReddit = sources.filter({ $0.type == .reddit }).dropFirst().first {
                 selectedSources.insert(secondReddit.id)
             }
+        }
+    }
+    
+    // MARK: - Setting Updates
+    
+    /// Update the daily summary settings
+    func updateDailySummarySettings(
+        showWeather: Bool? = nil,
+        includeTodayEvents: Bool? = nil,
+        summarizeSource: Bool? = nil,
+        summaryLength: DailySummarySettings.SummaryLength? = nil,
+        sortingOrder: DailySummarySettings.SummarySort? = nil
+    ) {
+        if let showWeather = showWeather {
+            dailySummarySettings.showWeather = showWeather
+        }
+        if let includeTodayEvents = includeTodayEvents {
+            dailySummarySettings.includeTodayEvents = includeTodayEvents
+        }
+        if let summarizeSource = summarizeSource {
+            dailySummarySettings.summarizeSource = summarizeSource
+        }
+        if let summaryLength = summaryLength {
+            dailySummarySettings.summaryLength = summaryLength
+        }
+        if let sortingOrder = sortingOrder {
+            dailySummarySettings.sortingOrder = sortingOrder
         }
     }
     
@@ -135,7 +198,21 @@ class AppModel {
         }
     }
     
-    // MARK: - Content Management
+    /// Toggle a source's prioritized state in the daily summary
+    func toggleSourcePrioritization(_ source: Source) {
+        if prioritizedSources.contains(source.id) {
+            prioritizedSources.remove(source.id)
+        } else {
+            prioritizedSources.insert(source.id)
+        }
+    }
+    
+    /// Check if a source is currently prioritized
+    func isSourcePrioritized(_ source: Source) -> Bool {
+        prioritizedSources.contains(source.id)
+    }
+    
+// MARK: - Content Management
     
     /// Fetch content for a specific source (mocked implementation)
     func getContentForSource(_ source: Source) -> [ContentItem] {

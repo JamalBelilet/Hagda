@@ -12,8 +12,8 @@ struct EmptyStateView: View {
     
     init(
         icon: String = "newspaper",
-        title: String = "No items yet",
-        message: String = "Your feed is empty. Add sources from the library to start seeing content."
+        title: String = "Your Feed Awaits",
+        message: String = "Add sources from the library to start discovering content tailored to you."
     ) {
         self.icon = icon
         self.title = title
@@ -42,7 +42,7 @@ struct EmptyStateView: View {
                 .accessibilityIdentifier("EmptyStateDescription")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemGroupedBackground))
+        .background(Color(.gray).opacity(0.1))
     }
 }
 

@@ -1,4 +1,7 @@
 import SwiftUI
+#if os(iOS) || os(visionOS)
+import UIKit
+#endif
 
 /// A horizontal selector for source types with animated selection
 struct TypeSelectorView: View {
@@ -19,14 +22,14 @@ struct TypeSelectorView: View {
                         HStack(spacing: 6) {
                             Image(systemName: type.icon)
                                 .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(selectedType != type ? Color(.secondaryLabel) : Color(.systemBackground))
+                                .foregroundColor(selectedType != type ? Color.gray : Color.white)
                             
                             if selectedType == type {
                                 Text(type.displayName)
                                     .font(.subheadline)
                                     .fontWeight(.medium)
                                     .lineLimit(1)
-                                    .foregroundColor(Color(.systemBackground))
+                                    .foregroundColor(Color.white)
                                     .fixedSize(horizontal: true, vertical: false)
                                     .transition(.opacity)
                             }
@@ -36,7 +39,11 @@ struct TypeSelectorView: View {
                         .frame(maxWidth: selectedType != type ? .infinity : nil)
                         .background(
                             Capsule()
-                                .fill(selectedType != type ? Color(.secondarySystemFill) : Color(.label))
+                                #if os(iOS) || os(visionOS)
+                                .fill(selectedType != type ? Color(.secondarySystemBackground) : Color.primary)
+                                #else
+                                .fill(selectedType != type ? Color.gray.opacity(0.2) : Color.primary)
+                                #endif
                         )
                         .transition(.scale)
                     }
@@ -49,7 +56,7 @@ struct TypeSelectorView: View {
             .padding(.top, 8)
         }
         .frame(maxWidth: .infinity)
-        .background(Color(.systemGroupedBackground))
+//        .background(Color(.gray).opacity(0.1))
     }
 }
 
@@ -58,9 +65,9 @@ extension TypeSelectorView {
     func asListRow() -> some View {
         self
             .listRowInsets(EdgeInsets())
-            .listRowBackground(Color(.systemGroupedBackground))
-            .listSectionSeparator(.hidden, edges: .top)
-            #if os(iOS)
+//            .listRowBackground(Color(.gray).opacity(0.1))
+            .listSectionSeparator(.hidden)
+            #if os(iOS) || os(visionOS)
             .frame(width: UIScreen.main.bounds.width)
             #endif
             .alignmentGuide(.leading) { _ in -20 }

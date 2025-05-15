@@ -14,20 +14,30 @@ struct FeedView: View {
             if appModel.feedSources.isEmpty {
                 EmptyStateView()
                     .accessibilityIdentifier("EmptyStateView")
-                    .background(Color(.systemGroupedBackground))
+                    .background(Color(.gray).opacity(0.1))
             } else {
                 sourcesList
             }
         }
         .navigationTitle("Taila")
         .toolbar {
+            #if os(iOS) || os(visionOS)
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink(destination: CombinedLibraryView()) {
-                    Image(systemName: "square.grid.2x2")
+                    Image(systemName: "plus")
                         .font(.system(size: 18))
                         .accessibilityIdentifier("SourcesButton")
                 }
             }
+            #else
+            ToolbarItem {
+                NavigationLink(destination: CombinedLibraryView()) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 18))
+                        .accessibilityIdentifier("SourcesButton")
+                }
+            }
+            #endif
         }
         .searchable(text: $searchText, prompt: "Search")
     }
@@ -42,8 +52,8 @@ struct FeedView: View {
                 DailySummaryView()
             } header: {
                 SectionHeaderView(
-                    title: "Daily Summary",
-                    description: "Your personalized briefing for today",
+                    title: "Today's Brief",
+                    description: "Your personalized overview for today",
                     icon: "newspaper"
                 )
             }
@@ -55,7 +65,7 @@ struct FeedView: View {
             } header: {
                 SectionHeaderView(
                     title: "Continue",
-                    description: "Pick up where you left off",
+                    description: "Resume where you left off",
                     icon: "bookmark"
                 )
             }
@@ -66,8 +76,8 @@ struct FeedView: View {
                 TopContentView()
             } header: {
                 SectionHeaderView(
-                    title: "Top Content",
-                    description: "Popular items from your sources",
+                    title: "Trending Now",
+                    description: "Popular content from your sources",
                     icon: "star"
                 )
             }
@@ -116,11 +126,26 @@ struct FeedView: View {
         }
         .listStyle(.inset)
         .scrollContentBackground(.visible)
-        .background(Color(.systemGroupedBackground))
+        .background(Color(.gray).opacity(0.1))
+        .refreshable {
+            await refreshFeed()
+        }
         .accessibilityIdentifier("FeedList")
     }
     
     // MARK: - Helper Methods
+    
+    /// Refreshes the feed content - simulates a network request
+    private func refreshFeed() async {
+        // Simulate network delay
+        try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
+        
+        // In a real app, this would reload content from a server
+        // For now, just update any visible state if needed
+        
+        // Post a notification that other components can observe to refresh their content
+        NotificationCenter.default.post(name: .feedRefreshed, object: nil)
+    }
     
     /// Creates a section for a specific source type
     private func createSourceSection(for type: SourceType, sources: [Source]) -> some View {
@@ -158,4 +183,10 @@ struct FeedView: View {
         FeedView()
             .environment(AppModel())
     }
+}
+
+// MARK: - Notification Names
+extension Notification.Name {
+    /// Posted when the feed is refreshed
+    static let feedRefreshed = Notification.Name("feedRefreshed")
 }

@@ -1,4 +1,7 @@
 import SwiftUI
+#if os(iOS) || os(visionOS)
+import UIKit
+#endif
 
 /// A combined view that merges the library and source adding functionality
 struct CombinedLibraryView: View {
@@ -17,8 +20,13 @@ struct CombinedLibraryView: View {
     var body: some View {
         ZStack {
             // Apply background to entire screen
+            #if os(iOS) || os(visionOS)
             Color(.systemGroupedBackground)
                 .ignoresSafeArea()
+            #else
+            Color.gray.opacity(0.1)
+                .ignoresSafeArea()
+            #endif
             
             // Content - either library or search results
             if showingResults {
@@ -27,7 +35,8 @@ struct CombinedLibraryView: View {
                 libraryList
             }
         }
-        .navigationTitle("Add sources")
+        .navigationTitle("Discover Sources")
+        #if os(iOS) || os(visionOS)
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchQuery,
                     placement: .navigationBarDrawer(displayMode: .always),
@@ -35,6 +44,12 @@ struct CombinedLibraryView: View {
         .autocorrectionDisabled()
         .textInputAutocapitalization(.never)
         .onSubmit(of: .search, performSearch)
+        #else
+        .searchable(text: $searchQuery,
+                    prompt: selectedType.searchPlaceholder)
+        .autocorrectionDisabled()
+        .onSubmit(of: .search, performSearch)
+        #endif
         .accessibilityIdentifier("CombinedLibraryView")
     }
     
@@ -70,14 +85,20 @@ struct CombinedLibraryView: View {
         }
         .listStyle(.inset)
         .scrollContentBackground(.visible)
+        #if os(iOS) || os(visionOS)
         .background(Color(.systemGroupedBackground))
+        #else
+        .background(Color.gray.opacity(0.1))
+        #endif
+        #if os(iOS) || os(visionOS)
         .scrollIndicators(.visible)
+        #endif
         .overlay {
             if filteredCategories.isEmpty {
                 EmptyStateView(
                     icon: selectedType.icon,
-                    title: "No Sources",
-                    message: "Search to find \(selectedType.displayName.lowercased()) sources."
+                    title: "Sources Not Found",
+                    message: "Search to discover \(selectedType.displayName.lowercased()) sources."
                 )
             }
         }
@@ -103,7 +124,6 @@ struct CombinedLibraryView: View {
                             .controlSize(.large)
                         Spacer()
                     }
-                    .listRowBackground(Color(.secondarySystemBackground))
                     .padding()
                 }
             } else {
@@ -111,11 +131,15 @@ struct CombinedLibraryView: View {
                     if searchResults.isEmpty {
                         EmptyStateView(
                             icon: "magnifyingglass",
-                            title: "No Results",
-                            message: "Try a different search term."
+                            title: "No Matches Found",
+                            message: "Try different keywords or broaden your search."
                         )
                         .frame(height: 200)
+                        #if os(iOS) || os(visionOS)
                         .listRowBackground(Color(.secondarySystemBackground))
+                        #else
+                        .listRowBackground(Color.gray.opacity(0.2))
+                        #endif
                     } else {
                         ForEach(searchResults) { source in
                             sourceResultRow(source)
@@ -126,11 +150,17 @@ struct CombinedLibraryView: View {
         }
         .listStyle(.inset)
         .scrollContentBackground(.visible)
+        #if os(iOS) || os(visionOS)
         .background(Color(.systemGroupedBackground))
+        #else
+        .background(Color.gray.opacity(0.1))
+        #endif
+        #if os(iOS) || os(visionOS)
         .scrollIndicators(.visible)
+        #endif
         .safeAreaInset(edge: .bottom) {
             if !isSearching && showingResults && !searchResults.isEmpty {
-                Text("Tap a source to add it to your feed")
+                Text("Tap a source to add it to your personalized feed")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
@@ -142,12 +172,12 @@ struct CombinedLibraryView: View {
     
     /// Row for search results with add button
     private func sourceResultRow(_ source: Source) -> some View {
-        SourceResultRowView(source: source) { source in
+        SourceResultRowView(
+            source: source,
+            isAdded: appModel.isSourceSelected(source)
+        ) { source in
             appModel.addSource(source)
-            withAnimation {
-                showingResults = false
-                searchQuery = ""
-            }
+            // Stay on search results instead of closing
         }
     }
     
