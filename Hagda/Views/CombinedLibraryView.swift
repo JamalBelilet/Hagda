@@ -145,9 +145,16 @@ struct CombinedLibraryView: View {
                         EmptyStateView(
                             icon: "magnifyingglass",
                             title: "No Matches Found",
-                            message: selectedType == .podcast ? 
-                                "Try different podcast keywords or check your internet connection." : 
-                                "Try different keywords or broaden your search."
+                            message: {
+                                switch selectedType {
+                                case .podcast:
+                                    return "Try different podcast keywords or check your internet connection."
+                                case .reddit:
+                                    return "Try different subreddit names or check your internet connection."
+                                default:
+                                    return "Try different keywords or broaden your search."
+                                }
+                            }()
                         )
                         .frame(height: 200)
                         #if os(iOS) || os(visionOS)
@@ -233,11 +240,20 @@ struct CombinedLibraryView: View {
         showingResults = true
         errorMessage = nil
         
-        if selectedType == .podcast {
-            // For podcasts, use the iTunes Search API
+        // Use async API for podcast and reddit searches
+        if selectedType == .podcast || selectedType == .reddit {
             Task {
                 do {
-                    let results = try await appModel.searchPodcasts(query: searchQuery)
+                    var results: [Source] = []
+                    
+                    if selectedType == .podcast {
+                        // For podcasts, use the iTunes Search API
+                        results = try await appModel.searchPodcasts(query: searchQuery)
+                    } else if selectedType == .reddit {
+                        // For reddit, use the Reddit API
+                        results = try await appModel.searchSubreddits(query: searchQuery)
+                    }
+                    
                     // Update UI on the main thread
                     await MainActor.run {
                         self.searchResults = results
@@ -247,7 +263,7 @@ struct CombinedLibraryView: View {
                     // Handle errors
                     await MainActor.run {
                         self.searchResults = []
-                        self.errorMessage = "Failed to search podcasts: \(error.localizedDescription)"
+                        self.errorMessage = "Failed to search \(selectedType.displayName.lowercased()): \(error.localizedDescription)"
                         self.isSearching = false
                     }
                 }
