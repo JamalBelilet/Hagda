@@ -5,8 +5,20 @@ struct SectionHeaderView: View {
     let title: String
     let description: String
     let icon: String
+    var destination: (() -> AnyView)? = nil
     
     var body: some View {
+        if let destination = destination {
+            NavigationLink(destination: destination()) {
+                headerContent
+            }
+            .buttonStyle(.plain)
+        } else {
+            headerContent
+        }
+    }
+    
+    private var headerContent: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 Image(systemName: icon)
@@ -16,6 +28,14 @@ struct SectionHeaderView: View {
                 Text(title)
                     .font(.headline)
                     .fontWeight(.bold)
+                
+                if destination != nil {
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             
             Text(description)

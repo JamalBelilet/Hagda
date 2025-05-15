@@ -66,7 +66,8 @@ struct FeedView: View {
                 SectionHeaderView(
                     title: "Continue",
                     description: "Resume where you left off",
-                    icon: "bookmark"
+                    icon: "bookmark",
+                    destination: { AnyView(ContinueReadingView()) }
                 )
             }
             .headerProminence(.increased)

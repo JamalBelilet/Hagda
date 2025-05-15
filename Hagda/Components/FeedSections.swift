@@ -312,33 +312,7 @@ struct ContinueItemsView: View {
                     }
                 }
                 
-                // "See All" button if there are more items than we're showing
-                if continueItems.count > maxItemsInFeed {
-                    Divider()
-                        .padding(.vertical, 10)
-                    
-                    NavigationLink(destination: ContinueReadingView()) {
-                        HStack {
-                            Text("See All")
-                                .font(.headline)
-                                .foregroundColor(.accentColor)
-                            
-                            Spacer()
-                            
-                            Text("\(continueItems.count) items")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(.accentColor)
-                        }
-                        .padding()
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(12)
-                    }
-                    .buttonStyle(.plain)
-                }
+                // No "See All" button needed as we now use the section header for navigation
             }
         }
         .navigationDestination(isPresented: $showItemDetail) {
