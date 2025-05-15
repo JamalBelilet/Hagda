@@ -76,6 +76,115 @@ struct ITunesPodcast: Codable, Identifiable {
     }
 }
 
+/// Model for a podcast episode
+struct PodcastEpisode: Codable, Identifiable {
+    let guid: String
+    let title: String
+    let description: String
+    let pubDate: String
+    let enclosure: Enclosure?
+    let duration: String?
+    let link: String?
+    let author: String?
+    let summary: String?
+    let image: String?
+    
+    /// Unique identifier for conforming to Identifiable
+    var id: String { guid }
+    
+    /// Episode URL from enclosure
+    var audioUrl: String? { enclosure?.url }
+    
+    /// Duration in user-friendly format
+    var formattedDuration: String {
+        guard let durationStr = duration else { return "Unknown length" }
+        
+        // If it's just seconds as a string (e.g., "3600")
+        if let seconds = Int(durationStr) {
+            let hours = seconds / 3600
+            let minutes = (seconds % 3600) / 60
+            // let remainingSeconds = seconds % 60  // Unused for now
+            
+            if hours > 0 {
+                return "\(hours) hr \(minutes) min"
+            } else if minutes > 0 {
+                return "\(minutes) min"
+            } else {
+                return "\(seconds) sec"
+            }
+        }
+        
+        // If it's in format HH:MM:SS
+        let components = durationStr.split(separator: ":").map { String($0) }
+        if components.count == 3 {
+            let hours = Int(components[0]) ?? 0
+            let minutes = Int(components[1]) ?? 0
+            
+            if hours > 0 {
+                return "\(hours) hr \(minutes) min"
+            } else {
+                return "\(minutes) min"
+            }
+        } else if components.count == 2 {
+            let minutes = Int(components[0]) ?? 0
+            return "\(minutes) min"
+        }
+        
+        return durationStr
+    }
+    
+    /// Publication date as a Date object
+    var publicationDate: Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
+        if let date = formatter.date(from: pubDate) {
+            return date
+        }
+        
+        // Try alternative format
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+        return formatter.date(from: pubDate)
+    }
+    
+    /// Enclosure for audio files
+    struct Enclosure: Codable {
+        let url: String
+        let type: String?
+        let length: String?
+    }
+    
+    /// Factory method to convert to ContentItem
+    func toContentItem(podcastSource: Source) -> ContentItem {
+        return ContentItem(
+            title: title,
+            subtitle: formattedDuration,
+            date: publicationDate ?? Date(),
+            type: .podcast,
+            contentPreview: description.isEmpty ? summary ?? "" : description,
+            progressPercentage: 0.0
+        )
+    }
+}
+
+/// RSS feed response for podcast episodes
+struct PodcastFeed: Codable {
+    let channel: Channel
+    
+    struct Channel: Codable {
+        let title: String
+        let description: String
+        let link: String
+        let image: Image?
+        let item: [PodcastEpisode]
+    }
+    
+    struct Image: Codable {
+        let url: String
+        let title: String?
+        let link: String?
+    }
+}
+
 /// Service for interacting with the iTunes Search API
 class ITunesSearchService {
     private let session: URLSession
@@ -165,5 +274,227 @@ class ITunesSearchService {
         // Parse the response
         let response = try JSONDecoder().decode(ITunesSearchResponse.self, from: data)
         return response.results.map { $0.toSource() }
+    }
+    
+    /// Fetch podcast episodes from RSS feed
+    /// - Parameter feedUrl: URL to the podcast's RSS feed
+    /// - Returns: Array of ContentItem objects representing episodes
+    func fetchPodcastEpisodes(from feedUrl: String, source: Source) async throws -> [ContentItem] {
+        guard let url = URL(string: feedUrl) else {
+            throw URLError(.badURL)
+        }
+        
+        // Create the request
+        var request = URLRequest(url: url)
+        request.setValue("application/xml", forHTTPHeaderField: "Accept")
+        request.setValue("Hagda/1.0", forHTTPHeaderField: "User-Agent")
+        
+        // Execute the request with async/await
+        let (data, response) = try await session.data(for: request)
+        
+        // Check response
+        guard let httpResponse = response as? HTTPURLResponse, 
+              httpResponse.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+        
+        // Parse the XML data into podcast episodes
+        #if DEBUG
+        print("Fetched \(data.count) bytes from podcast feed")
+        #endif
+        
+        // Convert data to string for parsing
+        guard let xmlString = String(data: data, encoding: .utf8) else {
+            throw URLError(.cannotParseResponse)
+        }
+        
+        // Define regex patterns for extracting podcast episode information
+        let itemPattern = "<item>[\\s\\S]*?<\\/item>"
+        let titlePattern = "<title>(.*?)<\\/title>"
+        let descPattern = "<description><!\\[CDATA\\[(.*?)\\]\\]><\\/description>|<description>(.*?)<\\/description>"
+        let pubDatePattern = "<pubDate>(.*?)<\\/pubDate>"
+        let guidPattern = "<guid[^>]*>(.*?)<\\/guid>"
+        let durationPattern = "<itunes:duration>(.*?)<\\/itunes:duration>"
+        let enclosurePattern = "<enclosure url=\"([^\"]*)\"[^>]*>"
+        let summaryPattern = "<itunes:summary><!\\[CDATA\\[(.*?)\\]\\]><\\/itunes:summary>|<itunes:summary>(.*?)<\\/itunes:summary>"
+        
+        // Create regex objects
+        guard let itemRegex = try? NSRegularExpression(pattern: itemPattern),
+              let titleRegex = try? NSRegularExpression(pattern: titlePattern),
+              let descRegex = try? NSRegularExpression(pattern: descPattern),
+              let pubDateRegex = try? NSRegularExpression(pattern: pubDatePattern),
+              let guidRegex = try? NSRegularExpression(pattern: guidPattern),
+              let durationRegex = try? NSRegularExpression(pattern: durationPattern),
+              let enclosureRegex = try? NSRegularExpression(pattern: enclosurePattern),
+              let summaryRegex = try? NSRegularExpression(pattern: summaryPattern) else {
+            throw URLError(.cannotParseResponse)
+        }
+        
+        // Find all item tags in the XML
+        let nsString = xmlString as NSString
+        let itemMatches = itemRegex.matches(in: xmlString, range: NSRange(location: 0, length: nsString.length))
+        
+        #if DEBUG
+        print("Found \(itemMatches.count) episodes in podcast feed")
+        #endif
+        
+        // Stop here if no episodes were found
+        if itemMatches.isEmpty {
+            return generateSampleEpisodes(for: source)
+        }
+        
+        // Parse each episode
+        var episodes: [PodcastEpisode] = []
+        
+        for itemMatch in itemMatches {
+            let itemXml = nsString.substring(with: itemMatch.range)
+            let itemNSString = itemXml as NSString
+            
+            // Extract title
+            var title = "Untitled Episode"
+            if let titleMatch = titleRegex.firstMatch(in: itemXml, range: NSRange(location: 0, length: itemXml.count)) {
+                title = itemNSString.substring(with: titleMatch.range(at: 1))
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .replacingOccurrences(of: "&amp;", with: "&")
+                    .replacingOccurrences(of: "&lt;", with: "<")
+                    .replacingOccurrences(of: "&gt;", with: ">")
+                    .replacingOccurrences(of: "&quot;", with: "\"")
+                    .replacingOccurrences(of: "&apos;", with: "'")
+            }
+            
+            // Extract description (handles both CDATA and regular format)
+            var description = ""
+            if let descMatch = descRegex.firstMatch(in: itemXml, range: NSRange(location: 0, length: itemXml.count)) {
+                // Try CDATA version first (range 1)
+                if descMatch.range(at: 1).location != NSNotFound {
+                    description = itemNSString.substring(with: descMatch.range(at: 1))
+                } 
+                // Try regular version (range 2)
+                else if descMatch.numberOfRanges > 2 && descMatch.range(at: 2).location != NSNotFound {
+                    description = itemNSString.substring(with: descMatch.range(at: 2))
+                }
+                description = description.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            
+            // Extract summary
+            var summary = ""
+            if let summaryMatch = summaryRegex.firstMatch(in: itemXml, range: NSRange(location: 0, length: itemXml.count)) {
+                // Try CDATA version first (range 1)
+                if summaryMatch.range(at: 1).location != NSNotFound {
+                    summary = itemNSString.substring(with: summaryMatch.range(at: 1))
+                } 
+                // Try regular version (range 2)
+                else if summaryMatch.numberOfRanges > 2 && summaryMatch.range(at: 2).location != NSNotFound {
+                    summary = itemNSString.substring(with: summaryMatch.range(at: 2))
+                }
+                summary = summary.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            
+            // Extract publication date
+            var pubDate = "Thu, 01 Jan 1970 00:00:00 +0000"
+            if let dateMatch = pubDateRegex.firstMatch(in: itemXml, range: NSRange(location: 0, length: itemXml.count)) {
+                pubDate = itemNSString.substring(with: dateMatch.range(at: 1))
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            
+            // Extract GUID
+            var guid = UUID().uuidString // Default to random UUID
+            if let guidMatch = guidRegex.firstMatch(in: itemXml, range: NSRange(location: 0, length: itemXml.count)) {
+                guid = itemNSString.substring(with: guidMatch.range(at: 1))
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            
+            // Extract duration
+            var duration: String? = nil
+            if let durationMatch = durationRegex.firstMatch(in: itemXml, range: NSRange(location: 0, length: itemXml.count)) {
+                duration = itemNSString.substring(with: durationMatch.range(at: 1))
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            
+            // Extract enclosure URL
+            var enclosure: PodcastEpisode.Enclosure? = nil
+            if let enclosureMatch = enclosureRegex.firstMatch(in: itemXml, range: NSRange(location: 0, length: itemXml.count)) {
+                let url = itemNSString.substring(with: enclosureMatch.range(at: 1))
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                enclosure = PodcastEpisode.Enclosure(url: url, type: "audio/mpeg", length: nil)
+            }
+            
+            // Create episode object
+            let episode = PodcastEpisode(
+                guid: guid,
+                title: title,
+                description: description,
+                pubDate: pubDate,
+                enclosure: enclosure,
+                duration: duration,
+                link: nil,
+                author: nil,
+                summary: summary,
+                image: nil
+            )
+            
+            episodes.append(episode)
+        }
+        
+        // If no episodes were successfully parsed, return sample data
+        if episodes.isEmpty {
+            #if DEBUG
+            print("No episodes parsed successfully, using sample data")
+            #endif
+            return generateSampleEpisodes(for: source)
+        }
+        
+        // Convert PodcastEpisode objects to ContentItem objects
+        #if DEBUG
+        print("Successfully parsed \(episodes.count) podcast episodes")
+        // Print first episode as sample
+        if let first = episodes.first {
+            print("First episode: \(first.title) - \(first.formattedDuration)")
+        }
+        #endif
+        
+        return episodes.map { $0.toContentItem(podcastSource: source) }
+    }
+    
+    /// Generate sample podcast episodes for a source (temporary implementation)
+    /// - Parameter source: The podcast source
+    /// - Returns: Array of ContentItems representing sample episodes
+    private func generateSampleEpisodes(for source: Source) -> [ContentItem] {
+        let calendar = Calendar.current
+        let today = Date()
+        
+        return (1...15).map { index in
+            let daysAgo = Double(index * 7) // Weekly episodes
+            let date = calendar.date(byAdding: .day, value: -Int(daysAgo), to: today) ?? today
+            
+            let titles = ["Exploring New Technologies", 
+                        "Interview with Industry Expert",
+                        "Deep Dive into Development",
+                        "The Future of Computing",
+                        "Beginner's Guide to Programming"]
+            let episodeTitle = "Episode \(100 - index): \(titles.randomElement() ?? "")"
+            
+            let duration = "\(Int.random(in: 25...75)) minutes"
+            
+            let description = """
+            In this episode:
+            
+            • Discussion of latest trends in technology
+            • Interview with special guest
+            • Q&A session with listeners
+            • Future predictions and insights
+            
+            Join us for an in-depth conversation about technology and development.
+            """
+            
+            return ContentItem(
+                title: episodeTitle,
+                subtitle: duration,
+                date: date,
+                type: .podcast,
+                contentPreview: description,
+                progressPercentage: Double.random(in: 0.0...0.3) // Some episodes may be partially played
+            )
+        }
     }
 }

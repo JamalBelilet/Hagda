@@ -125,10 +125,26 @@ extension Source {
             Source(name: "The Verge", type: .mastodon, description: "Tech journalism covering products, science, and digital culture developments.", handle: "@verge@mastodon.social"),
             
             // Podcasts
-            Source(name: "This Week in Tech", type: .podcast, description: "Leo Laporte and tech insiders explore the week's hottest tech news every Sunday.", handle: "by Leo Laporte and TWiT.tv"),
-            Source(name: "Hard Fork", type: .podcast, description: "Kevin Roose and Casey Newton dive into pressing questions about AI and tech's impact on society.", handle: "by The New York Times"),
-            Source(name: "The Vergecast", type: .podcast, description: "Making sense of the week's tech news with Nilay Patel and David Pierce.", handle: "by The Verge"),
-            Source(name: "Waveform", type: .podcast, description: "MKBHD's deep dives on consumer tech products, industry news, and behind-the-scenes insights.", handle: "by Marques Brownlee")
+            Source(name: "This Week in Tech", 
+                  type: .podcast, 
+                  description: "Leo Laporte and tech insiders explore the week's hottest tech news every Sunday.", 
+                  handle: "by Leo Laporte and TWiT.tv",
+                  feedUrl: "https://feeds.twit.tv/twit.xml"),
+            Source(name: "Hard Fork", 
+                  type: .podcast, 
+                  description: "Kevin Roose and Casey Newton dive into pressing questions about AI and tech's impact on society.", 
+                  handle: "by The New York Times",
+                  feedUrl: "https://feeds.simplecast.com/l2i9YnTd"),
+            Source(name: "The Vergecast", 
+                  type: .podcast, 
+                  description: "Making sense of the week's tech news with Nilay Patel and David Pierce.", 
+                  handle: "by The Verge",
+                  feedUrl: "https://feeds.megaphone.fm/vergecast"),
+            Source(name: "Waveform", 
+                  type: .podcast, 
+                  description: "MKBHD's deep dives on consumer tech products, industry news, and behind-the-scenes insights.", 
+                  handle: "by Marques Brownlee",
+                  feedUrl: "https://feeds.megaphone.fm/STU4418364045")
         ]
     }
 }
