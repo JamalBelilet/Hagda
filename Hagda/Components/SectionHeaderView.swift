@@ -5,8 +5,6 @@ struct SectionHeaderView: View {
     let title: String
     let description: String
     let icon: String
-    var destination: (() -> AnyView)? = nil
-    var viewAllAction: (() -> Void)? = nil
     
     var body: some View {
         headerContent
@@ -22,25 +20,6 @@ struct SectionHeaderView: View {
                 Text(title)
                     .font(.headline)
                     .fontWeight(.bold)
-                
-                Spacer()
-                
-                if destination != nil || viewAllAction != nil {
-                    Button(action: {
-                        if let action = viewAllAction {
-                            action()
-                        } else if let dest = destination {
-                            // This will be handled by a navigation link in the parent view
-                        }
-                    }) {
-                        Text("View All")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(.accentColor)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("ViewAll-\(title)")
-                }
             }
             
             Text(description)

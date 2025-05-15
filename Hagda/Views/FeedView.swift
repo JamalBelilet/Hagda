@@ -1,5 +1,7 @@
 import SwiftUI
 
+// Local components
+
 /// The main feed view displaying sources grouped by type
 struct FeedView: View {
     // MARK: - Properties
@@ -64,12 +66,14 @@ struct FeedView: View {
             // Continue Reading/Listening Section
             Section {
                 ContinueItemsView()
+                
+                // View All button at bottom of section
+                ViewAllButton(title: "Continue Reading", action: { showContinueAll = true })
             } header: {
                 SectionHeaderView(
                     title: "Continue",
                     description: "Resume where you left off",
-                    icon: "bookmark",
-                    viewAllAction: { showContinueAll = true }
+                    icon: "bookmark"
                 )
             }
             .background(
@@ -83,12 +87,14 @@ struct FeedView: View {
             // Top Content Section
             Section {
                 TopContentView()
+                
+                // View All button at bottom of section
+                ViewAllButton(title: "Trending Content", action: { showTrendingAll = true })
             } header: {
                 SectionHeaderView(
                     title: "Trending Now",
                     description: "Popular content from your sources",
-                    icon: "star",
-                    viewAllAction: { showTrendingAll = true }
+                    icon: "star"
                 )
             }
             .background(
