@@ -264,6 +264,8 @@ struct ContinueItemsView: View {
     @Environment(AppModel.self) private var appModel
     @State private var continueItems: [ContentItem] = []
     @State private var isRefreshing = false
+    @State private var selectedItem: ContentItem?
+    @State private var showItemDetail = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -271,29 +273,42 @@ struct ContinueItemsView: View {
                 emptyStateView
             } else {
                 ForEach(continueItems) { item in
-                    // Main row with content and progress
-                    NavigationLink(destination: ContentDetailView(item: item)) {
-                        continueItemRow(for: item)
-                            .padding(.bottom, 12)
+                    VStack(spacing: 0) {
+                        // Main row with content and progress
+                        Button {
+                            selectedItem = item
+                            showItemDetail = true
+                        } label: {
+                            continueItemRow(for: item)
+                                .padding(.bottom, 12)
+                        }
+                        .buttonStyle(.plain)
+                        
+                        // Preview of remaining content - separate button with same action
+                        Button {
+                            selectedItem = item
+                            showItemDetail = true
+                        } label: {
+                            RemainingContentPreview(item: item)
+                        }
+                        .buttonStyle(.plain)
+                        
+                        // Add spacing after the entire item
+                        if item != continueItems.last {
+                            Divider()
+                                .padding(.vertical, 10)
+                        }
+                        
+                        // Add bottom padding for the entire section
+                        Spacer()
+                            .frame(height: 16)
                     }
-                    .buttonStyle(.plain)
-                    
-                    // Preview of remaining content - completely separate from main row
-                    NavigationLink(destination: ContentDetailView(item: item)) {
-                        RemainingContentPreview(item: item)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    // Add spacing after the entire item
-                    if item != continueItems.last {
-                        Divider()
-                            .padding(.vertical, 10)
-                    }
-                    
-                    // Add bottom padding for the entire section
-                    Spacer()
-                        .frame(height: 16)
                 }
+            }
+        }
+        .navigationDestination(isPresented: $showItemDetail) {
+            if let item = selectedItem {
+                ContentDetailView(item: item)
             }
         }
         .refreshable {
