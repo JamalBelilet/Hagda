@@ -292,9 +292,40 @@ class AppModel {
         case .reddit:
             // For Reddit sources, use the Reddit API
             return try await fetchSubredditContent(subreddit: source)
+        case .podcast:
+            // For podcast sources, fetch episodes
+            return try await fetchPodcastEpisodes(podcast: source)
         default:
             // For other types, use sample data for now
             return ContentItem.samplesForSource(source)
+        }
+    }
+    
+    /// Fetch podcast episodes
+    /// - Parameter podcast: The podcast source
+    /// - Returns: Array of ContentItem objects representing episodes
+    func fetchPodcastEpisodes(podcast: Source) async throws -> [ContentItem] {
+        // Check if the source has a feed URL
+        guard let feedUrl = podcast.feedUrl, !feedUrl.isEmpty else {
+            // If no feed URL is available, use sample data for development
+            print("No feed URL found for podcast, using sample data")
+            return ContentItem.samplesForSource(podcast)
+        }
+        
+        do {
+            // Try to fetch episodes from the feed
+            return try await itunesSearchService.fetchPodcastEpisodes(from: feedUrl, source: podcast)
+        } catch {
+            print("Error fetching podcast episodes: \(error.localizedDescription)")
+            
+            // If we're in DEBUG mode, return some sample content for testing
+            #if DEBUG
+            print("Returning sample content for podcast in DEBUG mode")
+            return ContentItem.samplesForSource(podcast)
+            #else
+            // In production, rethrow the error
+            throw error
+            #endif
         }
     }
 }

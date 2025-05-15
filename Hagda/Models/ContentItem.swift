@@ -233,3 +233,78 @@ struct ContentItemRow: View {
         ))
     }
 }
+
+/// Displays a podcast episode in a row format
+struct PodcastEpisodeRow: View {
+    let item: ContentItem
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Title
+            Text(item.title)
+                .font(.headline)
+                .lineLimit(2)
+            
+            // Duration and date
+            HStack(spacing: 12) {
+                HStack(spacing: 4) {
+                    Image(systemName: "clock")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                    
+                    Text(item.subtitle) // Contains the duration
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "calendar")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                    
+                    Text(item.relativeTimeString)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+            }
+            
+            // Progress bar if episode is partially played
+            if item.progressPercentage > 0 {
+                VStack(alignment: .leading, spacing: 2) {
+                    ProgressView(value: item.progressPercentage, total: 1.0)
+                        .progressViewStyle(.linear)
+                        .tint(.accentColor)
+                    
+                    Text("\(Int(item.progressPercentage * 100))% played")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 2)
+            }
+        }
+        .padding(.vertical, 4)
+        .accessibilityIdentifier("PodcastEpisode-\(item.id)")
+    }
+}
+
+#Preview("Podcast Episodes") {
+    List {
+        PodcastEpisodeRow(item: ContentItem(
+            title: "Episode 142: The Future of Mobile Development",
+            subtitle: "45 minutes",
+            date: Date().addingTimeInterval(-3600 * 24), // 1 day ago
+            type: .podcast,
+            progressPercentage: 0.35
+        ))
+        
+        PodcastEpisodeRow(item: ContentItem(
+            title: "Interview with Tech Industry Leader",
+            subtitle: "62 minutes",
+            date: Date().addingTimeInterval(-3600 * 72), // 3 days ago
+            type: .podcast,
+            progressPercentage: 0.0
+        ))
+    }
+}

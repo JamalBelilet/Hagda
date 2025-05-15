@@ -27,6 +27,7 @@ struct DailyBriefDetailView: View {
         }
         .navigationTitle("Today's Brief Details")
         .toolbar {
+            #if os(iOS) || os(visionOS)
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     // Show settings sheet
@@ -36,6 +37,17 @@ struct DailyBriefDetailView: View {
                         .foregroundColor(.accentColor)
                 }
             }
+            #else
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    // Show settings sheet
+                    showSettings()
+                } label: {
+                    Image(systemName: "gearshape")
+                        .foregroundColor(.accentColor)
+                }
+            }
+            #endif
         }
         .sheet(isPresented: $showingSettings) {
             settingsSheet

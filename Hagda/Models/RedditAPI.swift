@@ -158,7 +158,7 @@ class RedditAPIService {
         request.setValue("Hagda/1.0", forHTTPHeaderField: "User-Agent") // Reddit API requires a user agent
         
         // Execute the request with async/await
-        let (data, _) = try await session.data(from: url)
+        let (data, _) = try await session.data(for: request)
         
         // Parse the response
         let response = try JSONDecoder().decode(RedditSearchResponse.self, from: data)
@@ -243,7 +243,7 @@ class RedditAPIService {
         request.setValue("Hagda/1.0", forHTTPHeaderField: "User-Agent") // Reddit API requires a user agent
         
         // Execute the request with async/await
-        let (data, _) = try await session.data(from: url)
+        let (data, _) = try await session.data(for: request)
         
         #if DEBUG
         // Print the JSON response for debugging

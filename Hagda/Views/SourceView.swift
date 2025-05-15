@@ -57,7 +57,11 @@ struct SourceView: View {
                 } else {
                     ForEach(contentItems) { item in
                         NavigationLink(destination: ContentDetailView(item: item)) {
-                            ContentItemRow(item: item)
+                            if item.type == .podcast {
+                                PodcastEpisodeRow(item: item)
+                            } else {
+                                ContentItemRow(item: item)
+                            }
                         }
                     }
                 }
