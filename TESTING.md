@@ -1,3 +1,68 @@
+# Testing Guide for Hagda App
+
+This document outlines the steps to test various features of the Hagda app on an iPhone simulator.
+
+# Testing Bluesky API Integration
+
+This section outlines the steps to test the Bluesky API integration on an iPhone simulator.
+
+## Test Plan
+
+1. **Launch the app on iPhone simulator**
+   - Open the project in Xcode
+   - Select an iPhone simulator as the target device
+   - Build and run the app (⌘+R)
+
+2. **Test Bluesky Account Listing**
+   - Navigate to the "Discover Sources" tab
+   - Select "Bluesky" in the type selector
+   - Verify that initial Bluesky accounts are displayed correctly
+
+3. **Test Bluesky Account Search**
+   - Search for a Bluesky account (e.g., "jay", "bsky", "atproto")
+   - Verify search results are displayed correctly
+   - Confirm that account details are shown:
+     - Display name
+     - Handle
+     - Description
+     - Follower count (if available)
+   - Add one or more Bluesky accounts to your feed
+
+4. **Test Direct Handle Lookup**
+   - Search for a specific handle (e.g., "@jay.bsky.social")
+   - Verify that the correct account is found
+   - Add the account to your feed
+
+5. **Test Bluesky Posts Display**
+   - Navigate to a Bluesky source from your feed
+   - Verify that the list of posts is displayed
+   - Confirm that each post shows:
+     - Post text
+     - Author handle
+     - Publication date
+     - Interaction counts (likes, reposts, replies)
+   
+6. **Test Post Details**
+   - Tap on a post to view its details
+   - Verify that the post details are displayed correctly
+   - Confirm that navigation works properly
+
+## Expected Results
+
+- The app should connect to the Bluesky public API endpoint
+- Searches should return relevant Bluesky accounts
+- Account details should be displayed properly
+- Posts should load asynchronously with proper formatting
+- Error handling should be robust, with graceful fallbacks
+- The UI should remain responsive during API calls
+
+## Notes
+
+- The app uses the public Bluesky API endpoint (public.api.bsky.app/xrpc)
+- No authentication is required for basic account search and post viewing
+- The API integration handles various response formats with fallback mechanisms
+- In DEBUG mode, network requests are logged to the console
+
 # Testing Podcast Episodes Feature
 
 This document outlines the steps to test the podcast episodes feature on an iPhone 16 simulator.
