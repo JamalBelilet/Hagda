@@ -132,7 +132,8 @@ struct SocialDetailView: View {
                 }
                 
                 HStack(spacing: 6) {
-                    Image(systemName: "arrow.2.squarepath")
+                    // Different icon for Mastodon and BlueSky
+                    Image(systemName: item.type == .mastodon ? "arrow.triangle.2.circlepath" : "arrow.2.squarepath")
                     Text("\(viewModel.repostCount)")
                 }
                 

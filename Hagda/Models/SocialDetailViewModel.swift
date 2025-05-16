@@ -115,8 +115,40 @@ class SocialDetailViewModel {
     
     /// Load additional details for a Mastodon post
     private func loadMastodonDetails() {
-        // Similar implementation as loadBlueSkyDetails but for Mastodon
-        // Will be implemented in a separate task
+        // Extract handle if available
+        guard let handle = extractHandle() else {
+            self.error = NSError(domain: "SocialDetailViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not determine Mastodon handle"])
+            return
+        }
+        
+        Task {
+            do {
+                self.isLoading = true
+                
+                // Get the Mastodon API service from App Model
+                let mastodonService = AppModel.shared.mastodonAPIService
+                
+                // Fetch content for the source to get real data
+                if let source = createSourceFromHandle(handle) {
+                    let content = try await mastodonService.fetchContentForSource(source)
+                    
+                    // Find the matching post by comparing titles
+                    if let matchingPost = content.first(where: { $0.title == self.item.title }) {
+                        await updateUIWithPost(matchingPost)
+                    } else if !content.isEmpty {
+                        // If no exact match, just use the first post
+                        await updateUIWithPost(content[0])
+                    }
+                }
+                
+                self.isLoading = false
+            } catch {
+                await MainActor.run {
+                    self.error = error
+                    self.isLoading = false
+                }
+            }
+        }
     }
     
     /// Extract the handle from the content item
@@ -161,17 +193,34 @@ class SocialDetailViewModel {
         // Parse interaction counts from subtitle
         let subtitle = post.subtitle
         
-        // Example format: "@handle • 10 replies • 5 reposts • 20 likes"
-        if subtitle.contains("replies") {
-            let components = subtitle.components(separatedBy: " • ")
-            
-            for component in components.dropFirst() { // Skip the handle
-                if component.contains("replies") {
-                    self.replyCount = extractNumber(from: component)
-                } else if component.contains("reposts") {
-                    self.repostCount = extractNumber(from: component)
-                } else if component.contains("likes") {
-                    self.likeCount = extractNumber(from: component)
+        if item.type == .bluesky {
+            // Example format: "@handle • 10 replies • 5 reposts • 20 likes"
+            if subtitle.contains("replies") {
+                let components = subtitle.components(separatedBy: " • ")
+                
+                for component in components.dropFirst() { // Skip the handle
+                    if component.contains("replies") {
+                        self.replyCount = extractNumber(from: component)
+                    } else if component.contains("reposts") {
+                        self.repostCount = extractNumber(from: component)
+                    } else if component.contains("likes") {
+                        self.likeCount = extractNumber(from: component)
+                    }
+                }
+            }
+        } else if item.type == .mastodon {
+            // Example format: "@handle • 10 replies • 5 boosts • 20 favorites"
+            if subtitle.contains("replies") {
+                let components = subtitle.components(separatedBy: " • ")
+                
+                for component in components.dropFirst() { // Skip the handle
+                    if component.contains("replies") {
+                        self.replyCount = extractNumber(from: component)
+                    } else if component.contains("boosts") {
+                        self.repostCount = extractNumber(from: component)
+                    } else if component.contains("favorites") {
+                        self.likeCount = extractNumber(from: component)
+                    }
                 }
             }
         }
