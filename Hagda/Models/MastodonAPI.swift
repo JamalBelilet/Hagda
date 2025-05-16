@@ -224,10 +224,12 @@ class MastodonAPIService {
             return
         }
         
-        // Construct the URL with parameters - using lookup endpoint
-        var components = URLComponents(string: "\(baseURL)/accounts/lookup")
+        // Construct the URL with parameters - using v2 search endpoint (works across instances)
+        var components = URLComponents(string: "\(instanceURL)/api/v2/search")
         components?.queryItems = [
-            URLQueryItem(name: "acct", value: encodedQuery)
+            URLQueryItem(name: "q", value: encodedQuery),
+            URLQueryItem(name: "type", value: "accounts"),
+            URLQueryItem(name: "limit", value: "\(limit)")
         ]
         
         guard let url = components?.url else {
@@ -271,13 +273,18 @@ class MastodonAPIService {
             #endif
             
             do {
-                // For lookup endpoint, we get a single account, not an array
-                let account = try JSONDecoder().decode(MastodonAccount.self, from: data)
-                let source = account.toSource()
-                completion(.success([source])) // Return as array for API compatibility
+                // Define structure for v2 search response
+                struct SearchResponse: Codable {
+                    let accounts: [MastodonAccount]
+                }
+                
+                // Parse the search response
+                let searchResponse = try JSONDecoder().decode(SearchResponse.self, from: data)
+                let sources = searchResponse.accounts.map { $0.toSource() }
+                completion(.success(sources))
             } catch {
                 #if DEBUG
-                print("Error decoding Mastodon account: \(error)")
+                print("Error decoding Mastodon search response: \(error)")
                 #endif
                 
                 // Return the error - no dummy data
@@ -299,10 +306,12 @@ class MastodonAPIService {
             throw URLError(.badURL)
         }
         
-        // Construct the URL with parameters - using lookup endpoint
-        var components = URLComponents(string: "\(baseURL)/accounts/lookup")
+        // Construct the URL with parameters - using v2 search endpoint (works across instances)
+        var components = URLComponents(string: "\(instanceURL)/api/v2/search")
         components?.queryItems = [
-            URLQueryItem(name: "acct", value: encodedQuery)
+            URLQueryItem(name: "q", value: encodedQuery),
+            URLQueryItem(name: "type", value: "accounts"),
+            URLQueryItem(name: "limit", value: "\(limit)")
         ]
         
         guard let url = components?.url else {
@@ -334,13 +343,17 @@ class MastodonAPIService {
             
             // Try to parse the response
             do {
-                // For lookup endpoint, we get a single account, not an array
-                let account = try JSONDecoder().decode(MastodonAccount.self, from: data)
-                let source = account.toSource()
-                return [source] // Return as array for API compatibility
+                // Define structure for v2 search response
+                struct SearchResponse: Codable {
+                    let accounts: [MastodonAccount]
+                }
+                
+                // Parse the search response
+                let searchResponse = try JSONDecoder().decode(SearchResponse.self, from: data)
+                return searchResponse.accounts.map { $0.toSource() }
             } catch {
                 #if DEBUG
-                print("Error decoding Mastodon account: \(error)")
+                print("Error decoding Mastodon search response: \(error)")
                 #endif
                 
                 // Return the error - no dummy data
@@ -365,10 +378,12 @@ class MastodonAPIService {
             throw URLError(.badURL)
         }
         
-        // Construct the URL with parameters
-        var components = URLComponents(string: "\(baseURL)/accounts/lookup")
+        // Construct the URL with parameters - using v2 search endpoint
+        var components = URLComponents(string: "\(instanceURL)/api/v2/search")
         components?.queryItems = [
-            URLQueryItem(name: "acct", value: encodedUsername)
+            URLQueryItem(name: "q", value: encodedUsername),
+            URLQueryItem(name: "type", value: "accounts"),
+            URLQueryItem(name: "limit", value: "1")
         ]
         
         guard let url = components?.url else {
@@ -383,9 +398,20 @@ class MastodonAPIService {
         // Execute the request with async/await
         let (data, _) = try await session.data(for: request)
         
-        // Parse the response
-        let account = try JSONDecoder().decode(MastodonAccount.self, from: data)
-        return account.toSource()
+        // Define structure for v2 search response
+        struct SearchResponse: Codable {
+            let accounts: [MastodonAccount]
+        }
+        
+        // Parse the search response
+        let searchResponse = try JSONDecoder().decode(SearchResponse.self, from: data)
+        
+        // Return the first account found or throw error if none
+        if let account = searchResponse.accounts.first {
+            return account.toSource()
+        } else {
+            throw URLError(.resourceUnavailable)
+        }
     }
     
     /// Fetch statuses for a Mastodon account
@@ -579,10 +605,12 @@ class MastodonAPIService {
     /// - Parameter username: The username to fetch
     /// - Returns: MastodonAccount object
     private func fetchAccountByUsername(_ username: String) async throws -> MastodonAccount {
-        // Construct the URL with parameters
-        var components = URLComponents(string: "\(baseURL)/accounts/lookup")
+        // Construct the URL with parameters - using v2 search endpoint
+        var components = URLComponents(string: "\(instanceURL)/api/v2/search")
         components?.queryItems = [
-            URLQueryItem(name: "acct", value: username)
+            URLQueryItem(name: "q", value: username),
+            URLQueryItem(name: "type", value: "accounts"),
+            URLQueryItem(name: "limit", value: "1")
         ]
         
         guard let url = components?.url else {
@@ -597,7 +625,19 @@ class MastodonAPIService {
         // Execute the request with async/await
         let (data, _) = try await session.data(for: request)
         
-        // Parse the response
-        return try JSONDecoder().decode(MastodonAccount.self, from: data)
+        // Define structure for v2 search response
+        struct SearchResponse: Codable {
+            let accounts: [MastodonAccount]
+        }
+        
+        // Parse the search response
+        let searchResponse = try JSONDecoder().decode(SearchResponse.self, from: data)
+        
+        // Return the first account found or throw error if none
+        if let account = searchResponse.accounts.first {
+            return account
+        } else {
+            throw URLError(.resourceUnavailable)
+        }
     }
 }
