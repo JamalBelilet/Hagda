@@ -175,10 +175,13 @@ class AppModel {
     /// Mastodon API service for account searches and fetching statuses
     private let mastodonAPIService = MastodonAPIService()
     
-    /// Search for sources by query and type (with real APIs for podcasts, Reddit, and Mastodon)
+    /// Bluesky API service for account searches and fetching posts
+    private let blueSkyAPIService = BlueSkyAPIService()
+    
+    /// Search for sources by query and type (with real APIs for podcasts, Reddit, Mastodon, and Bluesky)
     func searchSources(query: String, type: SourceType) -> [Source] {
-        // For podcasts, Reddit, and Mastodon, we return an empty array since search will be handled asynchronously
-        if type == .podcast || type == .reddit || type == .mastodon {
+        // For podcasts, Reddit, Mastodon, and Bluesky we return an empty array since search will be handled asynchronously
+        if type == .podcast || type == .reddit || type == .mastodon || type == .bluesky {
             return []
         }
         
@@ -250,6 +253,21 @@ class AppModel {
         return try await mastodonAPIService.searchAccounts(query: query, limit: 20)
     }
     
+    /// Search for Bluesky accounts using the Bluesky API
+    /// - Parameters:
+    ///   - query: The search term
+    ///   - completion: Closure that will be called with the results or error
+    func searchBlueSkyAccounts(query: String, completion: @escaping (Result<[Source], Error>) -> Void) {
+        blueSkyAPIService.searchAccounts(query: query, limit: 20, completion: completion)
+    }
+    
+    /// Search for Bluesky accounts using the Bluesky API with async/await
+    /// - Parameter query: The search term
+    /// - Returns: Array of Source objects representing Bluesky accounts
+    func searchBlueSkyAccounts(query: String) async throws -> [Source] {
+        return try await blueSkyAPIService.searchAccounts(query: query, limit: 20)
+    }
+    
     /// Fetch content for a subreddit
     /// - Parameters:
     ///   - subreddit: The subreddit source
@@ -316,6 +334,9 @@ class AppModel {
         case .mastodon:
             // For Mastodon sources, fetch statuses
             return try await fetchMastodonContent(mastodonSource: source)
+        case .bluesky:
+            // For Bluesky sources, fetch posts
+            return try await fetchBlueSkyContent(blueSkySource: source)
         default:
             // For other types, use sample data for now
             return ContentItem.samplesForSource(source)
@@ -364,6 +385,27 @@ class AppModel {
             #if DEBUG
             print("Returning sample content for Mastodon in DEBUG mode")
             return ContentItem.samplesForSource(mastodonSource)
+            #else
+            // In production, rethrow the error
+            throw error
+            #endif
+        }
+    }
+    
+    /// Fetch Bluesky posts
+    /// - Parameter blueSkySource: The Bluesky source
+    /// - Returns: Array of ContentItem objects representing posts
+    func fetchBlueSkyContent(blueSkySource: Source) async throws -> [ContentItem] {
+        do {
+            // Try to fetch content from the API
+            return try await blueSkyAPIService.fetchContentForSource(blueSkySource)
+        } catch {
+            print("Error fetching Bluesky content: \(error.localizedDescription)")
+            
+            // If we're in DEBUG mode, return some sample content for testing
+            #if DEBUG
+            print("Returning sample content for Bluesky in DEBUG mode")
+            return ContentItem.samplesForSource(blueSkySource)
             #else
             // In production, rethrow the error
             throw error
