@@ -6,7 +6,9 @@
 //
 
 import SwiftUI
+#if os(iOS) || os(visionOS)
 import UIKit
+#endif
 
 /// The main content view that serves as the entry point for the app
 struct ContentView: View {
@@ -23,7 +25,9 @@ struct ContentView: View {
         .accessibilityIdentifier("MainNavigationStack")
         .onAppear {
             // Set an accessibility label for UI testing
+            #if os(iOS) || os(visionOS)
             UIAccessibility.post(notification: .announcement, argument: "Hagda App Launched")
+            #endif
         }
     }
 }
