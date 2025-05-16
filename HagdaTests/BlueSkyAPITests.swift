@@ -8,11 +8,11 @@ final class BlueSkyAPITests: XCTestCase {
     var blueSkyAPIService: BlueSkyAPIService!
     
     // Mock URLSession for testing API calls without network
-    var mockURLSession: MockURLSession!
+    var mockURLSession: SharedMockURLSession!
     
     override func setUp() {
         super.setUp()
-        mockURLSession = MockURLSession()
+        mockURLSession = SharedMockURLSession()
         blueSkyAPIService = BlueSkyAPIService(session: mockURLSession)
     }
     
@@ -154,38 +154,3 @@ final class BlueSkyAPITests: XCTestCase {
     }
 }
 
-/// Mock URLSession for testing
-class MockURLSession: URLSession {
-    var mockData: Data?
-    var mockResponse: URLResponse?
-    var mockError: Error?
-    
-    override func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
-        let mockDataTask = MockURLSessionDataTask()
-        mockDataTask.completionHandler = {
-            completionHandler(self.mockData, self.mockResponse, self.mockError)
-        }
-        return mockDataTask
-    }
-    
-    override func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-        if let error = mockError {
-            throw error
-        }
-        
-        guard let data = mockData, let response = mockResponse else {
-            throw URLError(.unknown)
-        }
-        
-        return (data, response)
-    }
-}
-
-/// Mock URLSessionDataTask for testing
-class MockURLSessionDataTask: URLSessionDataTask {
-    var completionHandler: (() -> Void)?
-    
-    override func resume() {
-        completionHandler?()
-    }
-}

@@ -111,6 +111,9 @@ class AppModel {
             if let secondReddit = sources.filter({ $0.type == .reddit }).dropFirst().first {
                 selectedSources.insert(secondReddit.id)
             }
+        } else if isTestingMode {
+            // Ensure selectedSources is empty for tests
+            selectedSources.removeAll()
         }
     }
     
@@ -178,20 +181,21 @@ class AppModel {
     /// Bluesky API service for account searches and fetching posts
     private let blueSkyAPIService = BlueSkyAPIService()
     
-    /// Search for sources by query and type (with real APIs for podcasts, Reddit, Mastodon, and Bluesky)
+    /// News API service for RSS feed searches and article fetching
+    private let newsAPIService = NewsAPIService()
+    
+    /// Search for sources by query and type (with real APIs for podcasts, Reddit, Mastodon, Bluesky, and news)
     func searchSources(query: String, type: SourceType) -> [Source] {
-        // For podcasts, Reddit, Mastodon, and Bluesky we return an empty array since search will be handled asynchronously
-        if type == .podcast || type == .reddit || type == .mastodon || type == .bluesky {
+        // For podcasts, Reddit, Mastodon, Bluesky, and news we return an empty array since search will be handled asynchronously
+        if type == .podcast || type == .reddit || type == .mastodon || type == .bluesky || type == .article {
             return []
         }
         
         // For other types, use mock implementation
         switch type {
         case .article:
-            return [
-                Source(name: "Tech News Daily", type: .article, description: "Your daily dose of tech news and analysis.", handle: nil),
-                Source(name: "Ars Technica", type: .article, description: "Technology news, reviews, and analysis.", handle: nil)
-            ]
+            // News sources are now handled asynchronously via NewsAPIService
+            return []
         case .bluesky:
             return [
                 Source(name: "Tech Insider", type: .bluesky, description: "Breaking tech news and insider perspectives.", handle: "techinsider.bsky.social"),
@@ -337,6 +341,9 @@ class AppModel {
         case .bluesky:
             // For Bluesky sources, fetch posts
             return try await fetchBlueSkyContent(blueSkySource: source)
+        case .article:
+            // For news sources, fetch articles
+            return try await fetchNewsContent(newsSource: source)
         default:
             // For other types, use sample data for now
             return ContentItem.samplesForSource(source)
@@ -406,6 +413,42 @@ class AppModel {
             #if DEBUG
             print("Returning sample content for Bluesky in DEBUG mode")
             return ContentItem.samplesForSource(blueSkySource)
+            #else
+            // In production, rethrow the error
+            throw error
+            #endif
+        }
+    }
+    
+    /// Search for news sources using the News API
+    /// - Parameters:
+    ///   - query: The search term or website URL
+    ///   - completion: Closure that will be called with the results or error
+    func searchNewsSources(query: String, completion: @escaping (Result<[Source], Error>) -> Void) {
+        newsAPIService.searchSources(query: query, limit: 20, completion: completion)
+    }
+    
+    /// Search for news sources using the News API with async/await
+    /// - Parameter query: The search term or website URL
+    /// - Returns: Array of Source objects representing news sources
+    func searchNewsSources(query: String) async throws -> [Source] {
+        return try await newsAPIService.searchSources(query: query, limit: 20)
+    }
+    
+    /// Fetch news articles
+    /// - Parameter newsSource: The news source
+    /// - Returns: Array of ContentItem objects representing articles
+    func fetchNewsContent(newsSource: Source) async throws -> [ContentItem] {
+        do {
+            // Try to fetch content from the API
+            return try await newsAPIService.fetchArticles(for: newsSource)
+        } catch {
+            print("Error fetching news content: \(error.localizedDescription)")
+            
+            // If we're in DEBUG mode, return some sample content for testing
+            #if DEBUG
+            print("Returning sample content for news in DEBUG mode")
+            return ContentItem.samplesForSource(newsSource)
             #else
             // In production, rethrow the error
             throw error

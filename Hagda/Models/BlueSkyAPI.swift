@@ -208,7 +208,7 @@ struct GetAuthorFeedResponse: Codable {
 
 /// Service for interacting with the Bluesky API
 class BlueSkyAPIService {
-    private let session: URLSession
+    private let session: URLSessionProtocol
     // Use Bluesky's public API endpoint that doesn't require authentication
     private let baseURL = "https://public.api.bsky.app/xrpc"
     
@@ -216,7 +216,7 @@ class BlueSkyAPIService {
     private var accessToken: String?
     private var refreshToken: String?
     
-    init(session: URLSession = .shared) {
+    init(session: URLSessionProtocol = URLSession.shared) {
         self.session = session
     }
     

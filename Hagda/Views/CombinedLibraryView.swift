@@ -156,7 +156,7 @@ struct CombinedLibraryView: View {
                                 case .bluesky:
                                     return "Try different Bluesky account names or check your internet connection."
                                 default:
-                                    return "Try different keywords or broaden your search."
+                                    return "Try different keywords, a website URL (e.g., nytimes.com), or an RSS feed URL."
                                 }
                             }()
                         )
@@ -244,8 +244,8 @@ struct CombinedLibraryView: View {
         showingResults = true
         errorMessage = nil
         
-        // Use async API for podcast, reddit, mastodon, and bluesky searches
-        if selectedType == .podcast || selectedType == .reddit || selectedType == .mastodon || selectedType == .bluesky {
+        // Use async API for podcast, reddit, mastodon, bluesky, and news searches
+        if selectedType == .podcast || selectedType == .reddit || selectedType == .mastodon || selectedType == .bluesky || selectedType == .article {
             Task {
                 do {
                     var results: [Source] = []
@@ -262,6 +262,9 @@ struct CombinedLibraryView: View {
                     } else if selectedType == .bluesky {
                         // For bluesky, use the Bluesky API
                         results = try await appModel.searchBlueSkyAccounts(query: searchQuery)
+                    } else if selectedType == .article {
+                        // For news sources, use the News API service
+                        results = try await appModel.searchNewsSources(query: searchQuery)
                     }
                     
                     // Update UI on the main thread

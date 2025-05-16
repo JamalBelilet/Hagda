@@ -187,10 +187,10 @@ struct PodcastFeed: Codable {
 
 /// Service for interacting with the iTunes Search API
 class ITunesSearchService {
-    private let session: URLSession
+    private let session: URLSessionProtocol
     private let baseURL = "https://itunes.apple.com/search"
     
-    init(session: URLSession = .shared) {
+    init(session: URLSessionProtocol = URLSession.shared) {
         self.session = session
     }
     

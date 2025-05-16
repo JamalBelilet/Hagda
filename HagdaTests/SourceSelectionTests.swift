@@ -4,7 +4,7 @@ import SwiftUI
 
 struct SourceSelectionTests {
     @Test func selectedSourcesAreTracked() {
-        let model = AppModel()
+        let model = AppModel(isTestingMode: true)
         let source = Source.sampleSources.first!
         
         #expect(model.selectedSources.isEmpty)
@@ -18,7 +18,7 @@ struct SourceSelectionTests {
     }
     
     @Test func feedShowsSelectedSources() {
-        let model = AppModel()
+        let model = AppModel(isTestingMode: true)
         
         // Create a test source that we have full control over
         let testSource = Source(name: "Test Source", type: .article, description: "Test source description", handle: nil)
@@ -37,7 +37,7 @@ struct SourceSelectionTests {
     }
     
     @Test func multipleFeedSourcesAreOrdered() {
-        let model = AppModel()
+        let model = AppModel(isTestingMode: true)
         
         // Create test sources with specific names to control sort order
         let sourceA = Source(name: "A Source", type: .article, description: "Test source A", handle: nil)

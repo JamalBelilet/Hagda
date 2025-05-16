@@ -13,10 +13,10 @@ final class SourceSelectionUITests: XCTestCase {
         app.launch()
         
         // 1. Verify we're on the feed screen
-        XCTAssertTrue(app.navigationBars["Taila"].exists)
+        XCTAssertTrue(app.navigationBars["Hagda"].exists)
         
         // 2. Navigate to library
-        app.navigationBars["Taila"].buttons.element(boundBy: 0).tap()
+        app.navigationBars["Hagda"].buttons.element(boundBy: 0).tap()
         sleep(1)
         
         // 3. Verify we see library content
@@ -33,6 +33,6 @@ final class SourceSelectionUITests: XCTestCase {
         sleep(1)
         
         // 5. Verify we're back on feed
-        XCTAssertTrue(app.navigationBars["Taila"].exists)
+        XCTAssertTrue(app.navigationBars["Hagda"].exists)
     }
 }

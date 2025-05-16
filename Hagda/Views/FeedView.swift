@@ -23,7 +23,7 @@ struct FeedView: View {
                 sourcesList
             }
         }
-        .navigationTitle("Taila")
+        .navigationTitle("Hagda")
         .toolbar {
             #if os(iOS) || os(visionOS)
             ToolbarItem(placement: .topBarTrailing) {
@@ -32,6 +32,7 @@ struct FeedView: View {
                         .font(.system(size: 18))
                         .accessibilityIdentifier("SourcesButton")
                 }
+                .accessibilityIdentifier("LibraryButton")
             }
             #else
             ToolbarItem {
@@ -40,6 +41,7 @@ struct FeedView: View {
                         .font(.system(size: 18))
                         .accessibilityIdentifier("SourcesButton")
                 }
+                .accessibilityIdentifier("LibraryButton")
             }
             #endif
         }

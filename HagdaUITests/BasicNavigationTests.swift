@@ -12,10 +12,10 @@ final class BasicNavigationTests: XCTestCase {
         app.launch()
         
         // Verify we're on the feed screen
-        XCTAssertTrue(app.navigationBars["Taila"].exists)
+        XCTAssertTrue(app.navigationBars["Hagda"].exists)
         
         // Navigate to library using direct button access
-        app.navigationBars["Taila"].buttons.element(boundBy: 0).tap()
+        app.navigationBars["Hagda"].buttons.element(boundBy: 0).tap()
         sleep(1)
         
         // Verify we see basic library content - direct string matching
@@ -26,6 +26,6 @@ final class BasicNavigationTests: XCTestCase {
         sleep(1)
         
         // Verify we're back on feed
-        XCTAssertTrue(app.navigationBars["Taila"].exists)
+        XCTAssertTrue(app.navigationBars["Hagda"].exists)
     }
 }

@@ -8,11 +8,11 @@ final class RedditAPITests: XCTestCase {
     var redditAPIService: RedditAPIService!
     
     // Mock URLSession for testing API calls without network
-    var mockURLSession: MockURLSession!
+    var mockURLSession: SharedMockURLSession!
     
     override func setUp() {
         super.setUp()
-        mockURLSession = MockURLSession()
+        mockURLSession = SharedMockURLSession()
         redditAPIService = RedditAPIService(session: mockURLSession)
     }
     
@@ -111,36 +111,3 @@ final class RedditAPITests: XCTestCase {
     }
 }
 
-/// A mock URLSession for testing API calls without network
-class MockURLSession: URLSession {
-    var mockData: Data?
-    var mockResponse: URLResponse?
-    var mockError: Error?
-    
-    override func data(from url: URL, delegate: URLSessionTaskDelegate? = nil) async throws -> (Data, URLResponse) {
-        if let mockError = mockError {
-            throw mockError
-        }
-        guard let mockData = mockData, let mockResponse = mockResponse else {
-            throw URLError(.unknown)
-        }
-        return (mockData, mockResponse)
-    }
-    
-    override func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
-        let mockDataTask = MockURLSessionDataTask()
-        mockDataTask.completionHandler = {
-            completionHandler(self.mockData, self.mockResponse, self.mockError)
-        }
-        return mockDataTask
-    }
-}
-
-/// A mock URLSessionDataTask for testing
-class MockURLSessionDataTask: URLSessionDataTask {
-    var completionHandler: (() -> Void)?
-    
-    override func resume() {
-        completionHandler?()
-    }
-}

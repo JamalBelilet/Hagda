@@ -69,10 +69,10 @@ struct RedditSubredditData: Codable {
 
 /// Service for interacting with the Reddit API
 class RedditAPIService {
-    private let session: URLSession
+    private let session: URLSessionProtocol
     private let baseURL = "https://www.reddit.com"
     
-    init(session: URLSession = .shared) {
+    init(session: URLSessionProtocol = URLSession.shared) {
         self.session = session
     }
     

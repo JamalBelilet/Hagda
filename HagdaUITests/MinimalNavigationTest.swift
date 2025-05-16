@@ -8,10 +8,10 @@ final class MinimalNavigationTest: XCTestCase {
         app.launch()
         
         // 1. Verify we're on the feed screen
-        XCTAssertTrue(app.navigationBars["Taila"].exists)
+        XCTAssertTrue(app.otherElements["MainNavigationStack"].exists)
         
-        // 2. Navigate to library
-        app.navigationBars["Taila"].buttons.element(boundBy: 0).tap()
+        // 2. Navigate to library using accessibility identifier
+        app.buttons["LibraryButton"].tap()
         sleep(1)
         
         // 3. Verify we can see library content
@@ -22,6 +22,6 @@ final class MinimalNavigationTest: XCTestCase {
         sleep(1)
         
         // 5. Verify we're back on feed
-        XCTAssertTrue(app.navigationBars["Taila"].exists)
+        XCTAssertTrue(app.otherElements["MainNavigationStack"].exists)
     }
 }

@@ -12,7 +12,7 @@ final class LibraryUITests: XCTestCase {
         app.launch()
         
         // Navigate to library
-        app.navigationBars["Taila"].buttons.element(boundBy: 0).tap()
+        app.navigationBars["Hagda"].buttons.element(boundBy: 0).tap()
         sleep(1)
         
         // Verify basic categories are present with direct string matching
@@ -30,7 +30,7 @@ final class LibraryUITests: XCTestCase {
         app.launch()
         
         // Navigate to library 
-        app.navigationBars["Taila"].buttons.element(boundBy: 0).tap()
+        app.navigationBars["Hagda"].buttons.element(boundBy: 0).tap()
         sleep(2) // Increase wait time
         
         // Just verify the category contains sources 

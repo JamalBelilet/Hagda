@@ -200,13 +200,13 @@ struct MastodonContext: Codable {
 
 /// Service for interacting with the Mastodon API
 class MastodonAPIService {
-    private let session: URLSession
+    private let session: URLSessionProtocol
     private let baseURL: String
     private let instanceURL: String
     
     /// Initialize with a specific Mastodon instance
     /// - Parameter instance: Mastodon instance domain (defaults to mastodon.social)
-    init(instance: String = "mastodon.social", session: URLSession = .shared) {
+    init(instance: String = "mastodon.social", session: URLSessionProtocol = URLSession.shared) {
         self.instanceURL = "https://\(instance)"
         self.baseURL = "\(instanceURL)/api/v1"
         self.session = session

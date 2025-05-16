@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 /// The main content view that serves as the entry point for the app
 struct ContentView: View {
@@ -20,6 +21,10 @@ struct ContentView: View {
             FeedView()
         }
         .accessibilityIdentifier("MainNavigationStack")
+        .onAppear {
+            // Set an accessibility label for UI testing
+            UIAccessibility.post(notification: .announcement, argument: "Hagda App Launched")
+        }
     }
 }
 

@@ -28,10 +28,10 @@ final class HagdaUITests: XCTestCase {
         app.launch()
         
         // Verify we're on the feed screen
-        XCTAssertTrue(app.navigationBars["Taila"].exists)
+        XCTAssertTrue(app.navigationBars["Hagda"].exists)
         
         // Navigate to library
-        app.navigationBars["Taila"].buttons.element(boundBy: 0).tap()
+        app.navigationBars["Hagda"].buttons.element(boundBy: 0).tap()
         sleep(1)
         
         // Verify we see library elements
