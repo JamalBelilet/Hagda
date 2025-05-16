@@ -36,7 +36,7 @@ struct DailySummarySettingsView: View {
                         Spacer()
                         
                         if appModel.isSourcePrioritized(source) {
-                            Image(systemName: "star.fill")
+                            Image(systemName: "star")
                                 .foregroundStyle(.yellow)
                         }
                     }

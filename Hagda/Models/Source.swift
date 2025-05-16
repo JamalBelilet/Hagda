@@ -14,9 +14,9 @@ enum SourceType: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .article: return "doc.text"
-        case .reddit: return "bubble.left.fill"
-        case .bluesky: return "cloud.fill"
-        case .mastodon: return "message.fill"
+        case .reddit: return "bubble.left"
+        case .bluesky: return "cloud"
+        case .mastodon: return "message"
         case .podcast: return "headphones"
         }
     }

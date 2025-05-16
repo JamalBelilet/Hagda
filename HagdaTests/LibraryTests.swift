@@ -25,9 +25,9 @@ struct LibraryModelTests {
     
     @Test func sourceTypesHaveCorrectRepresentation() {
         #expect(SourceType.article.icon == "doc.text")
-        #expect(SourceType.reddit.icon == "bubble.left.fill")
-        #expect(SourceType.bluesky.icon == "cloud.fill")
-        #expect(SourceType.mastodon.icon == "message.fill")
+        #expect(SourceType.reddit.icon == "bubble.left")
+        #expect(SourceType.bluesky.icon == "cloud")
+        #expect(SourceType.mastodon.icon == "message")
         #expect(SourceType.podcast.icon == "headphones")
     }
     

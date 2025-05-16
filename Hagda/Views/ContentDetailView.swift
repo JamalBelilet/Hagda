@@ -561,7 +561,7 @@ struct PodcastDetailView: View {
                     Button {
                         isPlaying.toggle()
                     } label: {
-                        Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                        Image(systemName: isPlaying ? "pause.circle" : "play.circle")
                             .font(.system(size: 54))
                             .foregroundStyle(Color.accentColor)
                     }

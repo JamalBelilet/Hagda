@@ -163,7 +163,7 @@ struct SourceResultRowView: View {
                 Spacer()
                 
                 // Show checkmark instead of plus if already added
-                Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
+                Image(systemName: isAdded ? "checkmark.circle" : "plus.circle")
                     .foregroundStyle(isAdded ? .blue : .green)
                     .font(.system(size: 22))
                     .symbolEffect(.bounce, value: isAdded)
