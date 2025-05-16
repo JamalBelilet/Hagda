@@ -24,6 +24,27 @@ struct BlueSkyAccount: Codable {
         case postsCount
     }
     
+    // Standard initializer for manual creation
+    init(did: String,
+         handle: String,
+         displayName: String?,
+         description: String?,
+         avatar: String?,
+         banner: String?,
+         followersCount: Int?,
+         followsCount: Int?,
+         postsCount: Int?) {
+        self.did = did
+        self.handle = handle
+        self.displayName = displayName
+        self.description = description
+        self.avatar = avatar
+        self.banner = banner
+        self.followersCount = followersCount
+        self.followsCount = followsCount
+        self.postsCount = postsCount
+    }
+    
     // Custom init to handle response structure
     init(from decoder: Decoder) throws {
         // Handle the nested structure from Bluesky API
@@ -151,7 +172,12 @@ struct BlueSkyPost: Codable {
 
 /// Models for Bluesky API responses
 struct SearchActorsResponse: Codable {
-    let actors: [BlueSkyAccount]
+    let actors: [BlueSkyAccount]?
+    
+    // Add a fallback for empty responses
+    var safeActors: [BlueSkyAccount] {
+        return actors ?? []
+    }
 }
 
 struct GetProfileResponse: Codable {
@@ -167,8 +193,13 @@ struct GetProfileResponse: Codable {
 }
 
 struct GetAuthorFeedResponse: Codable {
-    let feed: [FeedItem]
+    let feed: [FeedItem]?
     let cursor: String?
+    
+    // Add a fallback for empty responses
+    var safeFeed: [FeedItem] {
+        return feed ?? []
+    }
     
     struct FeedItem: Codable {
         let post: BlueSkyPost
@@ -178,7 +209,8 @@ struct GetAuthorFeedResponse: Codable {
 /// Service for interacting with the Bluesky API
 class BlueSkyAPIService {
     private let session: URLSession
-    private let baseURL = "https://bsky.social/xrpc"
+    // Use Bluesky's public API endpoint that doesn't require authentication
+    private let baseURL = "https://public.api.bsky.app/xrpc"
     
     // Authentication state
     private var accessToken: String?
@@ -200,12 +232,24 @@ class BlueSkyAPIService {
             return
         }
         
-        // Construct the URL with parameters
+        // Construct the URL with parameters using the correct Bluesky API endpoint
         var components = URLComponents(string: "\(baseURL)/app.bsky.actor.searchActors")
-        components?.queryItems = [
-            URLQueryItem(name: "term", value: encodedQuery),
-            URLQueryItem(name: "limit", value: "\(limit)")
-        ]
+        
+        // Use a different endpoint if the query starts with @ or contains .bsky.social
+        if query.hasPrefix("@") || query.contains(".bsky.social") {
+            // Try to use the getProfile endpoint instead for direct handle lookup
+            let cleanQuery = query.hasPrefix("@") ? String(query.dropFirst()) : query
+            components = URLComponents(string: "\(baseURL)/app.bsky.actor.getProfile")
+            components?.queryItems = [
+                URLQueryItem(name: "actor", value: cleanQuery)
+            ]
+        } else {
+            // Default search behavior
+            components?.queryItems = [
+                URLQueryItem(name: "term", value: encodedQuery),
+                URLQueryItem(name: "limit", value: "\(limit)")
+            ]
+        }
         
         guard let url = components?.url else {
             completion(.failure(URLError(.badURL)))
@@ -253,10 +297,79 @@ class BlueSkyAPIService {
             #endif
             
             do {
-                // Parse the search response
-                let searchResponse = try JSONDecoder().decode(SearchActorsResponse.self, from: data)
-                let sources = searchResponse.actors.map { $0.toSource() }
-                completion(.success(sources))
+                // Check if data is empty
+                guard !data.isEmpty else {
+                    // Return empty array for empty response
+                    completion(.success([]))
+                    return
+                }
+                
+                // Try to parse the response
+                do {
+                    // Parse the search response
+                    let searchResponse = try JSONDecoder().decode(SearchActorsResponse.self, from: data)
+                    let sources = searchResponse.safeActors.map { $0.toSource() }
+                    completion(.success(sources))
+                } catch {
+                    // Try alternative format - maybe it's a different response structure
+                    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        #if DEBUG
+                        print("Attempting to parse alternative JSON format: \(json)")
+                        #endif
+                        
+                        // Try to manually extract users if they exist in a different structure
+                        var users: [[String: Any]] = []
+                        if let usersArray = json["users"] as? [[String: Any]] {
+                            users = usersArray
+                        } else if let user = json["user"] as? [String: Any] {
+                            // Single user response
+                            users = [user]
+                        } else if let did = json["did"] as? String,
+                                  let handle = json["handle"] as? String {
+                            // Direct profile response
+                            users = [[
+                                "did": did,
+                                "handle": handle,
+                                "displayName": json["displayName"] as? String ?? handle,
+                                "description": json["description"] as Any,
+                                "avatar": json["avatar"] as Any,
+                                "followersCount": json["followersCount"] as Any
+                            ]]
+                        }
+                        
+                        if !users.isEmpty {
+                            // Create accounts manually from the JSON
+                            let manualAccounts = users.compactMap { userDict -> BlueSkyAccount? in
+                                guard let did = userDict["did"] as? String,
+                                      let handle = userDict["handle"] as? String else {
+                                    return nil
+                                }
+                                
+                                return BlueSkyAccount(
+                                    did: did,
+                                    handle: handle,
+                                    displayName: userDict["displayName"] as? String,
+                                    description: userDict["description"] as? String,
+                                    avatar: userDict["avatar"] as? String,
+                                    banner: userDict["banner"] as? String,
+                                    followersCount: userDict["followersCount"] as? Int,
+                                    followsCount: userDict["followsCount"] as? Int,
+                                    postsCount: userDict["postsCount"] as? Int
+                                )
+                            }
+                            
+                            let sources = manualAccounts.map { $0.toSource() }
+                            completion(.success(sources))
+                            return
+                        }
+                    }
+                    
+                    // If all else fails, return empty array instead of error
+                    #if DEBUG
+                    print("Error decoding Bluesky search response, returning empty array: \(error)")
+                    #endif
+                    completion(.success([]))
+                }
             } catch {
                 #if DEBUG
                 print("Error decoding Bluesky search response: \(error)")
@@ -281,12 +394,24 @@ class BlueSkyAPIService {
             throw URLError(.badURL)
         }
         
-        // Construct the URL with parameters
+        // Construct the URL with parameters using the correct Bluesky API endpoint
         var components = URLComponents(string: "\(baseURL)/app.bsky.actor.searchActors")
-        components?.queryItems = [
-            URLQueryItem(name: "term", value: encodedQuery),
-            URLQueryItem(name: "limit", value: "\(limit)")
-        ]
+        
+        // Use a different endpoint if the query starts with @ or contains .bsky.social
+        if query.hasPrefix("@") || query.contains(".bsky.social") {
+            // Try to use the getProfile endpoint instead for direct handle lookup
+            let cleanQuery = query.hasPrefix("@") ? String(query.dropFirst()) : query
+            components = URLComponents(string: "\(baseURL)/app.bsky.actor.getProfile")
+            components?.queryItems = [
+                URLQueryItem(name: "actor", value: cleanQuery)
+            ]
+        } else {
+            // Default search behavior
+            components?.queryItems = [
+                URLQueryItem(name: "term", value: encodedQuery),
+                URLQueryItem(name: "limit", value: "\(limit)")
+            ]
+        }
         
         guard let url = components?.url else {
             throw URLError(.badURL)
@@ -320,18 +445,75 @@ class BlueSkyAPIService {
             }
             #endif
             
+            // Check if data is empty
+            guard !data.isEmpty else {
+                // Return empty array for empty response
+                return []
+            }
+            
             // Try to parse the response
             do {
                 // Parse the search response
                 let searchResponse = try JSONDecoder().decode(SearchActorsResponse.self, from: data)
-                return searchResponse.actors.map { $0.toSource() }
+                return searchResponse.safeActors.map { $0.toSource() }
             } catch {
+                // Try alternative format - maybe it's a different response structure
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    #if DEBUG
+                    print("Attempting to parse alternative JSON format: \(json)")
+                    #endif
+                    
+                    // Try to manually extract users if they exist in a different structure
+                    var users: [[String: Any]] = []
+                    if let usersArray = json["users"] as? [[String: Any]] {
+                        users = usersArray
+                    } else if let user = json["user"] as? [String: Any] {
+                        // Single user response
+                        users = [user]
+                    } else if let did = json["did"] as? String,
+                              let handle = json["handle"] as? String {
+                        // Direct profile response
+                        users = [[
+                            "did": did,
+                            "handle": handle,
+                            "displayName": json["displayName"] as? String ?? handle,
+                            "description": json["description"] as Any,
+                            "avatar": json["avatar"] as Any,
+                            "followersCount": json["followersCount"] as Any
+                        ]]
+                    }
+                    
+                    if !users.isEmpty {
+                        // Create accounts manually from the JSON
+                        let manualAccounts = users.compactMap { userDict -> BlueSkyAccount? in
+                            guard let did = userDict["did"] as? String,
+                                  let handle = userDict["handle"] as? String else {
+                                return nil
+                            }
+                            
+                            return BlueSkyAccount(
+                                did: did,
+                                handle: handle,
+                                displayName: userDict["displayName"] as? String,
+                                description: userDict["description"] as? String,
+                                avatar: userDict["avatar"] as? String,
+                                banner: userDict["banner"] as? String,
+                                followersCount: userDict["followersCount"] as? Int,
+                                followsCount: userDict["followsCount"] as? Int,
+                                postsCount: userDict["postsCount"] as? Int
+                            )
+                        }
+                        
+                        return manualAccounts.map { $0.toSource() }
+                    }
+                }
+                
                 #if DEBUG
-                print("Error decoding Bluesky search response: \(error)")
+                print("Error decoding Bluesky search response, returning empty array: \(error)")
                 #endif
                 
-                // Return the error - no dummy data
-                throw error
+                // Return empty array instead of error for better UX
+                return []
             }
         } catch {
             #if DEBUG
@@ -347,7 +529,7 @@ class BlueSkyAPIService {
     /// - Parameter handle: The handle to lookup (e.g., "alice.bsky.social")
     /// - Returns: Source object representing the Bluesky account
     func lookupAccount(handle: String) async throws -> Source {
-        // Construct the URL with parameters
+        // Construct the URL with parameters using the correct Bluesky API endpoint
         var components = URLComponents(string: "\(baseURL)/app.bsky.actor.getProfile")
         components?.queryItems = [
             URLQueryItem(name: "actor", value: handle)
@@ -395,7 +577,7 @@ class BlueSkyAPIService {
     ///   - limit: Maximum number of results (default: 20)
     /// - Returns: Array of ContentItem objects representing posts
     func fetchAccountPosts(handle: String, limit: Int = 20) async throws -> [ContentItem] {
-        // Construct the URL with parameters
+        // Construct the URL with parameters using the correct Bluesky API endpoint
         var components = URLComponents(string: "\(baseURL)/app.bsky.feed.getAuthorFeed")
         components?.queryItems = [
             URLQueryItem(name: "actor", value: handle),
@@ -431,14 +613,14 @@ class BlueSkyAPIService {
         }
         #endif
         
-        // Parse the response
+        // Parse the response - now using public API format
         let feedResponse = try JSONDecoder().decode(GetAuthorFeedResponse.self, from: data)
         
         // Get account info to create a source
         let source = try await lookupAccount(handle: handle)
         
         // Convert to ContentItem objects
-        return feedResponse.feed.map { $0.post.toContentItem(source: source) }
+        return feedResponse.safeFeed.map { $0.post.toContentItem(source: source) }
     }
     
     /// Fetch content for a Bluesky source
