@@ -151,6 +151,8 @@ struct CombinedLibraryView: View {
                                     return "Try different podcast keywords or check your internet connection."
                                 case .reddit:
                                     return "Try different subreddit names or check your internet connection."
+                                case .mastodon:
+                                    return "Try different Mastodon account names or check your internet connection."
                                 default:
                                     return "Try different keywords or broaden your search."
                                 }
@@ -240,8 +242,8 @@ struct CombinedLibraryView: View {
         showingResults = true
         errorMessage = nil
         
-        // Use async API for podcast and reddit searches
-        if selectedType == .podcast || selectedType == .reddit {
+        // Use async API for podcast, reddit, and mastodon searches
+        if selectedType == .podcast || selectedType == .reddit || selectedType == .mastodon {
             Task {
                 do {
                     var results: [Source] = []
@@ -252,6 +254,9 @@ struct CombinedLibraryView: View {
                     } else if selectedType == .reddit {
                         // For reddit, use the Reddit API
                         results = try await appModel.searchSubreddits(query: searchQuery)
+                    } else if selectedType == .mastodon {
+                        // For mastodon, use the Mastodon API
+                        results = try await appModel.searchMastodonAccounts(query: searchQuery)
                     }
                     
                     // Update UI on the main thread

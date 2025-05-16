@@ -172,10 +172,13 @@ class AppModel {
     /// Reddit API service for subreddit searches
     private let redditAPIService = RedditAPIService()
     
-    /// Search for sources by query and type (with real APIs for podcasts and Reddit)
+    /// Mastodon API service for account searches and fetching statuses
+    private let mastodonAPIService = MastodonAPIService()
+    
+    /// Search for sources by query and type (with real APIs for podcasts, Reddit, and Mastodon)
     func searchSources(query: String, type: SourceType) -> [Source] {
-        // For podcasts and Reddit, we return an empty array since search will be handled asynchronously
-        if type == .podcast || type == .reddit {
+        // For podcasts, Reddit, and Mastodon, we return an empty array since search will be handled asynchronously
+        if type == .podcast || type == .reddit || type == .mastodon {
             return []
         }
         
@@ -230,6 +233,21 @@ class AppModel {
     /// - Returns: Array of Source objects representing subreddits
     func searchSubreddits(query: String) async throws -> [Source] {
         return try await redditAPIService.searchSubreddits(query: query, limit: 20)
+    }
+    
+    /// Search for Mastodon accounts using the Mastodon API
+    /// - Parameters:
+    ///   - query: The search term
+    ///   - completion: Closure that will be called with the results or error
+    func searchMastodonAccounts(query: String, completion: @escaping (Result<[Source], Error>) -> Void) {
+        mastodonAPIService.searchAccounts(query: query, limit: 20, completion: completion)
+    }
+    
+    /// Search for Mastodon accounts using the Mastodon API with async/await
+    /// - Parameter query: The search term
+    /// - Returns: Array of Source objects representing Mastodon accounts
+    func searchMastodonAccounts(query: String) async throws -> [Source] {
+        return try await mastodonAPIService.searchAccounts(query: query, limit: 20)
     }
     
     /// Fetch content for a subreddit
@@ -295,6 +313,9 @@ class AppModel {
         case .podcast:
             // For podcast sources, fetch episodes
             return try await fetchPodcastEpisodes(podcast: source)
+        case .mastodon:
+            // For Mastodon sources, fetch statuses
+            return try await fetchMastodonContent(mastodonSource: source)
         default:
             // For other types, use sample data for now
             return ContentItem.samplesForSource(source)
@@ -322,6 +343,27 @@ class AppModel {
             #if DEBUG
             print("Returning sample content for podcast in DEBUG mode")
             return ContentItem.samplesForSource(podcast)
+            #else
+            // In production, rethrow the error
+            throw error
+            #endif
+        }
+    }
+    
+    /// Fetch Mastodon statuses
+    /// - Parameter mastodonSource: The Mastodon source
+    /// - Returns: Array of ContentItem objects representing statuses
+    func fetchMastodonContent(mastodonSource: Source) async throws -> [ContentItem] {
+        do {
+            // Try to fetch content from the API
+            return try await mastodonAPIService.fetchContentForSource(mastodonSource)
+        } catch {
+            print("Error fetching Mastodon content: \(error.localizedDescription)")
+            
+            // If we're in DEBUG mode, return some sample content for testing
+            #if DEBUG
+            print("Returning sample content for Mastodon in DEBUG mode")
+            return ContentItem.samplesForSource(mastodonSource)
             #else
             // In production, rethrow the error
             throw error
