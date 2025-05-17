@@ -5,6 +5,7 @@ struct OnboardingView: View {
     // MARK: - Properties
     
     @Environment(AppModel.self) private var appModel
+    @Environment(\.dismiss) private var dismiss
     @State private var coordinator: OnboardingCoordinator
     
     // MARK: - Initialization
@@ -43,8 +44,8 @@ struct OnboardingView: View {
         .animation(.easeInOut, value: coordinator.currentStep)
         .onChange(of: coordinator.isOnboardingComplete) { _, isComplete in
             if isComplete {
-                // Update app model with onboarding selections
-                coordinator.completeOnboarding()
+                // When onboarding is complete, exit the view
+                dismiss()
             }
         }
         .accessibilityIdentifier("onboardingView")
