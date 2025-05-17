@@ -113,8 +113,12 @@ class AppModel {
             loadFromUserDefaults()
         }
         
-        // Select some default sources to populate the feed
-        if !isTestingMode && selectedSources.isEmpty && !isOnboardingComplete {
+        // We don't add mock data anymore since we'll either:
+        // 1. Show the onboarding flow which will let users select sources
+        // 2. Have previously saved source selections from onboarding
+        
+        // For testing purposes only
+        if isTestingMode && selectedSources.isEmpty {
             // Select one of each type to demonstrate all section types
             let typesToInclude: [SourceType] = [.article, .reddit, .bluesky, .podcast]
             
@@ -145,6 +149,11 @@ class AppModel {
         if let timeInterval = defaults.object(forKey: "dailyBriefTime") as? TimeInterval {
             dailyBriefTime = Date(timeIntervalSince1970: timeInterval)
         }
+        
+        // Load selected sources
+        if let selectedSourceIds = defaults.array(forKey: "selectedSources") as? [String] {
+            selectedSources = Set(selectedSourceIds)
+        }
     }
     
     /// Save onboarding completion status to UserDefaults
@@ -163,6 +172,12 @@ class AppModel {
     func saveDailyBriefTime(_ time: Date) {
         dailyBriefTime = time
         defaults.set(time.timeIntervalSince1970, forKey: "dailyBriefTime")
+    }
+    
+    /// Save selected sources to UserDefaults
+    func saveSelectedSources(_ sourceIds: Set<String>) {
+        selectedSources = sourceIds
+        defaults.set(Array(sourceIds), forKey: "selectedSources")
     }
     
     // MARK: - Setting Updates
