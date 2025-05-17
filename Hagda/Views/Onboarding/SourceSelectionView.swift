@@ -115,6 +115,7 @@ struct SourceSelectionView: View {
                 .accessibilityIdentifier("continueButton")
             }
             .padding()
+            .padding(.bottom, 40) // Add bottom padding to ensure buttons are above page indicator
         }
         .accessibilityIdentifier("sourceSelectionScreen")
     }

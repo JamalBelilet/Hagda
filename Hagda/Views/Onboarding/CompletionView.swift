@@ -50,6 +50,7 @@ struct CompletionView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
+            .padding(.bottom, 40) // Add bottom padding to ensure button is above page indicator
             .accessibilityIdentifier("startExploringButton")
         }
         .padding()

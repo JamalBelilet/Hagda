@@ -43,6 +43,7 @@ struct WelcomeView: View {
             }
             .font(.subheadline)
             .padding(.top)
+            .padding(.bottom, 40) // Add bottom padding to ensure button is above page indicator
             .accessibilityIdentifier("skipButton")
         }
         .padding()
