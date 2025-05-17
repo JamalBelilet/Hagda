@@ -96,7 +96,7 @@ class ArticleDetailViewModel {
                 self.isLoading = true
                 
                 // Get the News API service from App Model
-                let newsService = AppModel.shared.newsAPIService
+                let newsService = AppModel.shared.getNewsAPIService()
                 
                 // Create a source from the article info
                 let source = Source(

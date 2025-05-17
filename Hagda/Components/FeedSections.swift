@@ -1,7 +1,7 @@
 import SwiftUI
 
 // Import the Notification.Name extension from FeedView
-@_implementationOnly import class Foundation.NotificationCenter
+import Foundation
 
 // MARK: - Daily Summary Section
 

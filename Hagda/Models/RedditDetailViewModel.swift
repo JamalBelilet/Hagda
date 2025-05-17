@@ -117,7 +117,7 @@ class RedditDetailViewModel {
                 self.isLoading = true
                 
                 // Get the Reddit API service from App Model
-                let redditService = AppModel.shared.redditAPIService
+                let redditService = AppModel.shared.getRedditAPIService()
                 
                 // Create a source from the subreddit
                 let source = Source(

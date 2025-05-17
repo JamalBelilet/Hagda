@@ -20,12 +20,16 @@ struct ContentDetailView: View {
                 // Type-specific content
                 switch item.type {
                 case .article:
+                    // Use the ArticleDetailView with real data
                     ArticleDetailView(item: item)
                 case .reddit:
+                    // Use the RedditDetailView with real data
                     RedditDetailView(item: item)
                 case .bluesky, .mastodon:
+                    // Use the SocialDetailView with real data
                     SocialDetailView(item: item)
                 case .podcast:
+                    // Use the PodcastDetailView with real data
                     PodcastDetailView(item: item)
                 }
             }
@@ -101,8 +105,8 @@ struct ContentDetailView: View {
     }
 }
 
-/// Type-specific view for articles
-struct ArticleDetailView: View {
+/// Legacy type-specific view for articles (not used anymore)
+private struct ArticleDetailViewLegacy: View {
     let item: ContentItem
     
     var body: some View {
@@ -207,8 +211,8 @@ struct ArticleDetailView: View {
     }
 }
 
-/// Type-specific view for Reddit posts
-struct RedditDetailView: View {
+/// Legacy type-specific view for Reddit posts (not used anymore)
+private struct RedditDetailViewLegacy: View {
     let item: ContentItem
     
     var body: some View {
@@ -329,8 +333,8 @@ struct RedditDetailView: View {
     }
 }
 
-/// Type-specific view for social media posts (Bluesky/Mastodon)
-struct SocialDetailView: View {
+/// Legacy type-specific view for social media posts (Bluesky/Mastodon) (not used anymore)
+private struct SocialDetailViewLegacy: View {
     let item: ContentItem
     
     var body: some View {
@@ -470,8 +474,8 @@ struct SocialDetailView: View {
     }
 }
 
-/// Type-specific view for podcast episodes
-struct PodcastDetailView: View {
+/// Legacy type-specific view for podcast episodes (not used anymore)
+private struct PodcastDetailViewLegacy: View {
     let item: ContentItem
     @State private var isPlaying = false
     

@@ -167,6 +167,33 @@ class AppModel {
         selectedSources.insert(source.id)
     }
     
+    // MARK: - API Services
+    
+    /// Get the Bluesky API service
+    public func getBlueSkyAPIService() -> BlueSkyAPIService {
+        return blueSkyAPIService
+    }
+    
+    /// Get the Mastodon API service
+    public func getMastodonAPIService() -> MastodonAPIService {
+        return mastodonAPIService
+    }
+    
+    /// Get the Reddit API service
+    public func getRedditAPIService() -> RedditAPIService {
+        return redditAPIService
+    }
+    
+    /// Get the News API service
+    public func getNewsAPIService() -> NewsAPIService {
+        return newsAPIService
+    }
+    
+    /// Get the iTunes Search API service
+    public func getITunesSearchService() -> ITunesSearchService {
+        return itunesSearchService
+    }
+    
     // MARK: - Search
     
     /// iTunes Search API service for podcast searches

@@ -88,7 +88,7 @@ class SocialDetailViewModel {
                 self.isLoading = true
                 
                 // Get the BlueSky API service from App Model
-                let blueSkyService = AppModel.shared.blueSkyAPIService
+                let blueSkyService = AppModel.shared.getBlueSkyAPIService()
                 
                 // Fetch content for the source to get real data
                 if let source = createSourceFromHandle(handle) {
@@ -126,7 +126,7 @@ class SocialDetailViewModel {
                 self.isLoading = true
                 
                 // Get the Mastodon API service from App Model
-                let mastodonService = AppModel.shared.mastodonAPIService
+                let mastodonService = AppModel.shared.getMastodonAPIService()
                 
                 // Fetch content for the source to get real data
                 if let source = createSourceFromHandle(handle) {
