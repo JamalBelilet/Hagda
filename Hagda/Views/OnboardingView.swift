@@ -34,8 +34,12 @@ struct OnboardingView: View {
             CompletionView(coordinator: coordinator)
                 .tag(OnboardingCoordinator.OnboardingStep.completion)
         }
+        #if os(iOS) || os(visionOS)
         .tabViewStyle(.page(indexDisplayMode: .always))
         .indexViewStyle(.page(backgroundDisplayMode: .always))
+        #else
+        .tabViewStyle(.automatic)
+        #endif
         .animation(.easeInOut, value: coordinator.currentStep)
         .onChange(of: coordinator.isOnboardingComplete) { _, isComplete in
             if isComplete {

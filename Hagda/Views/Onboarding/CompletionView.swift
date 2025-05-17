@@ -14,7 +14,7 @@ struct CompletionView: View {
             
             Image(systemName: "checkmark.circle")
                 .font(.system(size: 80))
-                .foregroundStyle(.green)
+                .foregroundColor(.green)
                 .accessibilityIdentifier("completionIcon")
             
             Text("You're all set!")
@@ -24,19 +24,19 @@ struct CompletionView: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(.green)
+                        .foregroundColor(.green)
                     Text("\(coordinator.selectedSources.count) sources added to your feed")
                 }
                 
                 HStack {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(.green)
+                        .foregroundColor(.green)
                     Text("\(coordinator.dailyBriefCategories.count) categories in your daily brief")
                 }
                 
                 HStack {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(.green)
+                        .foregroundColor(.green)
                     Text("Daily brief scheduled for \(formattedTime(coordinator.dailyBriefTime))")
                 }
             }

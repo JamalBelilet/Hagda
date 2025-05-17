@@ -14,7 +14,7 @@ struct WelcomeView: View {
             
             Image(systemName: "newspaper")
                 .font(.system(size: 80))
-                .foregroundStyle(.accent)
+                .foregroundColor(.accentColor)
                 .accessibilityIdentifier("welcomeIcon")
             
             Text("Welcome to Hagda")
@@ -26,7 +26,7 @@ struct WelcomeView: View {
                 .font(.title3)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
-                .foregroundStyle(.secondary)
+                .foregroundColor(.secondary)
                 .accessibilityIdentifier("welcomeDescription")
             
             Spacer()

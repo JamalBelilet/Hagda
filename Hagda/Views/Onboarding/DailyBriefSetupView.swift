@@ -24,7 +24,7 @@ struct DailyBriefSetupView: View {
             
             Text("Your daily brief will be generated with content from these categories")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
                 .accessibilityIdentifier("dailyBriefDescription")
@@ -57,7 +57,11 @@ struct DailyBriefSetupView: View {
                         .accessibilityIdentifier("briefTimeSelector")
                 }
             }
+            #if os(iOS) || os(visionOS)
             .listStyle(.insetGrouped)
+            #else
+            .listStyle(.inset)
+            #endif
             .accessibilityIdentifier("briefSettingsList")
             
             Spacer()

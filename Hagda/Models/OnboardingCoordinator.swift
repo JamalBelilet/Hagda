@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Coordinator class to manage the onboarding flow and state
 @Observable
-class OnboardingCoordinator {
+class OnboardingCoordinator: ObservableObject {
     // MARK: - Properties
     
     /// Current step in the onboarding process

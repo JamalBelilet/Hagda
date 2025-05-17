@@ -17,7 +17,7 @@ struct SourceSelectionView: View {
             
             Text("Select at least 3 sources to personalize your feed")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundColor(.secondary)
                 .accessibilityIdentifier("sourceSelectionDescription")
             
             // Source type selector
@@ -31,7 +31,9 @@ struct SourceSelectionView: View {
                 TextField("Search \(coordinator.selectedSourceType.displayName.lowercased()) sources...", text: $coordinator.searchText)
                     .textFieldStyle(.roundedBorder)
                     .autocorrectionDisabled()
+                    #if os(iOS) || os(visionOS)
                     .textInputAutocapitalization(.never)
+                    #endif
                     .onSubmit {
                         coordinator.searchSources()
                     }
@@ -63,14 +65,18 @@ struct SourceSelectionView: View {
                         )
                     }
                 }
+                #if os(iOS) || os(visionOS)
                 .listStyle(.insetGrouped)
+                #else
+                .listStyle(.inset)
+                #endif
                 .accessibilityIdentifier("searchResultsList")
             } else if let error = coordinator.errorMessage {
                 // Error message
                 VStack {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
-                        .foregroundStyle(.red)
+                        .foregroundColor(.red)
                         .padding()
                     
                     Text("Search Error")
@@ -78,7 +84,7 @@ struct SourceSelectionView: View {
                     
                     Text(error)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding()
                 }
@@ -130,7 +136,11 @@ struct SourceSelectionView: View {
                 }
             }
         }
+        #if os(iOS) || os(visionOS)
         .listStyle(.insetGrouped)
+        #else
+        .listStyle(.inset)
+        #endif
         .accessibilityIdentifier("recommendedSourcesList")
     }
     
@@ -163,12 +173,12 @@ struct SourceResultRow: View {
                     if let handle = source.handle {
                         Text(handle)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundColor(.secondary)
                     }
                 }
             } icon: {
                 Image(systemName: source.type.icon)
-                    .foregroundStyle(.accent)
+                    .foregroundColor(.accentColor)
             }
             
             Spacer()
@@ -176,7 +186,7 @@ struct SourceResultRow: View {
             // Add/remove button
             Button(action: onSelect) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "plus.circle")
-                    .foregroundStyle(isSelected ? .green : .accent)
+                    .foregroundColor(isSelected ? .green : .accentColor)
                     .font(.title2)
             }
             .buttonStyle(.plain)
