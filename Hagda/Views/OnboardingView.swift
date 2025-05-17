@@ -5,7 +5,6 @@ struct OnboardingView: View {
     // MARK: - Properties
     
     @Environment(AppModel.self) private var appModel
-    @Environment(\.dismiss) private var dismiss
     @State private var coordinator: OnboardingCoordinator
     
     // MARK: - Initialization
@@ -44,8 +43,9 @@ struct OnboardingView: View {
         .animation(.easeInOut, value: coordinator.currentStep)
         .onChange(of: coordinator.isOnboardingComplete) { _, isComplete in
             if isComplete {
-                // When onboarding is complete, exit the view
-                dismiss()
+                // Directly update the appModel's isOnboardingComplete
+                // This will trigger HagdaApp to switch to ContentView
+                appModel.saveOnboardingComplete(true)
             }
         }
         .accessibilityIdentifier("onboardingView")
