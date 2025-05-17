@@ -31,20 +31,31 @@ struct WelcomeView: View {
             
             Spacer()
             
-            Button("Get Started") {
-                coordinator.advance()
+            VStack(spacing: 16) {
+                Button(action: {
+                    coordinator.advance()
+                }) {
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.system(size: 64))
+                        .foregroundColor(.primary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Get Started")
+                .accessibilityIdentifier("getStartedButton")
+                
+                Text("Get Started")
+                    .font(.headline)
             }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.capsule)
-            .controlSize(.large)
-            .padding(.horizontal, 40)
-            .accessibilityIdentifier("getStartedButton")
             
-            Button("Skip Setup") {
+            Button(action: {
                 coordinator.skipToCompletion()
+            }) {
+                Text("Skip Setup")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
-            .font(.subheadline)
-            .padding(.top)
+            .buttonStyle(.plain)
+            .padding(.top, 16)
             .padding(.bottom, 40) // Add bottom padding to ensure button is above page indicator
             .accessibilityIdentifier("skipButton")
         }

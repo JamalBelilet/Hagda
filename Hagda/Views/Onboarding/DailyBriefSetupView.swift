@@ -66,24 +66,30 @@ struct DailyBriefSetupView: View {
             
             // Navigation buttons
             HStack {
-                Button("Back") {
+                Button(action: {
                     coordinator.goTo(step: .sourceSelection)
+                }) {
+                    Image(systemName: "chevron.backward.circle.fill")
+                        .font(.system(size: 32))
                 }
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-                .controlSize(.regular)
-                .tint(.gray.opacity(0.8))
+                .buttonStyle(.plain)
+                .foregroundColor(.gray.opacity(0.8))
+                .accessibilityLabel("Back")
                 .accessibilityIdentifier("backButton")
                 
                 Spacer()
                 
-                Button("Continue") {
+                Button(action: {
                     coordinator.advance()
+                }) {
+                    Image(systemName: "chevron.forward.circle.fill")
+                        .font(.system(size: 32))
                 }
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-                .controlSize(.regular)
+                .buttonStyle(.plain)
+                .foregroundColor(.primary)
+                .opacity(coordinator.dailyBriefCategories.isEmpty ? 0.5 : 1.0)
                 .disabled(coordinator.dailyBriefCategories.isEmpty)
+                .accessibilityLabel("Continue")
                 .accessibilityIdentifier("continueButton")
             }
             .padding()

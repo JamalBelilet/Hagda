@@ -10,21 +10,19 @@ struct SourceSelectionView: View {
     
     var body: some View {
         VStack {
-            // Title is now in the navigation bar
-            
-            Text("Select at least 3 sources to personalize your feed")
+            // Source type selector moved to top
+            TypeSelectorView(selectedType: $coordinator.selectedSourceType)
                 .padding(.top, 20)
+                .accessibilityIdentifier("sourceTypeSelector")
+            
+            // Title is now in the navigation bar
+            Text("Select at least 3 sources to personalize your feed")
+                .padding(.top, 10)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
                 .accessibilityIdentifier("sourceSelectionDescription")
-            
-            // Source type selector
-            TypeSelectorView(selectedType: $coordinator.selectedSourceType)
-                .padding(.horizontal)
-                .padding(.top)
-                .accessibilityIdentifier("sourceTypeSelector")
             
             // Using the native searchable modifier instead of custom search field
             Spacer().frame(height: 16)
@@ -82,24 +80,30 @@ struct SourceSelectionView: View {
             
             // Navigation buttons
             HStack {
-                Button("Back") {
+                Button(action: {
                     coordinator.goTo(step: .welcome)
+                }) {
+                    Image(systemName: "chevron.backward.circle.fill")
+                        .font(.system(size: 32))
                 }
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-                .controlSize(.regular)
-                .tint(.gray.opacity(0.8))
+                .buttonStyle(.plain)
+                .foregroundColor(.gray.opacity(0.8))
+                .accessibilityLabel("Back")
                 .accessibilityIdentifier("backButton")
                 
                 Spacer()
                 
-                Button("Continue") {
+                Button(action: {
                     coordinator.advance()
+                }) {
+                    Image(systemName: "chevron.forward.circle.fill")
+                        .font(.system(size: 32))
                 }
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-                .controlSize(.regular)
+                .buttonStyle(.plain)
+                .foregroundColor(.primary)
+                .opacity(coordinator.selectedSources.count < 1 ? 0.5 : 1.0)
                 .disabled(coordinator.selectedSources.count < 1) // Typically would require more, reduced for demo
+                .accessibilityLabel("Continue")
                 .accessibilityIdentifier("continueButton")
             }
             .padding()

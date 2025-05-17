@@ -45,15 +45,22 @@ struct CompletionView: View {
             
             Spacer()
             
-            Button("Start Exploring") {
-                coordinator.completeOnboarding()
+            VStack(spacing: 16) {
+                Button(action: {
+                    coordinator.completeOnboarding()
+                }) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 64))
+                        .foregroundColor(.primary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Start Exploring")
+                .accessibilityIdentifier("startExploringButton")
+                
+                Text("Start Exploring")
+                    .font(.headline)
             }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.capsule)
-            .controlSize(.large)
-            .padding(.horizontal, 40)
             .padding(.bottom, 40) // Add bottom padding to ensure button is above page indicator
-            .accessibilityIdentifier("startExploringButton")
         }
         .padding()
         .accessibilityIdentifier("completionScreen")
