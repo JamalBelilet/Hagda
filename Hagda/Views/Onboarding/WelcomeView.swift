@@ -14,7 +14,7 @@ struct WelcomeView: View {
             
             Image(systemName: "newspaper")
                 .font(.system(size: 80))
-                .foregroundColor(.accentColor)
+                .foregroundColor(.primary)
                 .accessibilityIdentifier("welcomeIcon")
             
             Text("Welcome to Hagda")

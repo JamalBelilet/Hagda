@@ -17,12 +17,10 @@ struct DailyBriefSetupView: View {
     
     var body: some View {
         VStack {
-            Text("Customize Your Daily Brief")
-                .font(.title2.bold())
-                .padding(.top)
-                .accessibilityIdentifier("dailyBriefTitle")
+            // Title is now in the navigation bar
             
             Text("Your daily brief will be generated with content from these categories")
+                .padding(.top, 20)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)

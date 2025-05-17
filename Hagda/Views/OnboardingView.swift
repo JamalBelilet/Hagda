@@ -25,9 +25,9 @@ struct OnboardingView: View {
             // Source selection screen
             NavigationStack {
                 SourceSelectionView(coordinator: coordinator)
-                    .navigationTitle("Select Sources")
+                    .navigationTitle("Choose Your Content Sources")
                     #if os(iOS) || os(visionOS)
-                    .navigationBarTitleDisplayMode(.inline)
+                    .navigationBarTitleDisplayMode(.large)
                     #endif
             }
             .tag(OnboardingCoordinator.OnboardingStep.sourceSelection)
@@ -35,9 +35,9 @@ struct OnboardingView: View {
             // Daily brief setup screen
             NavigationStack {
                 DailyBriefSetupView(coordinator: coordinator)
-                    .navigationTitle("Daily Brief")
+                    .navigationTitle("Customize Your Daily Brief")
                     #if os(iOS) || os(visionOS)
-                    .navigationBarTitleDisplayMode(.inline)
+                    .navigationBarTitleDisplayMode(.large)
                     #endif
             }
             .tag(OnboardingCoordinator.OnboardingStep.dailyBriefSetup)

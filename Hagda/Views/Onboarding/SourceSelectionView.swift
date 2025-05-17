@@ -10,12 +10,10 @@ struct SourceSelectionView: View {
     
     var body: some View {
         VStack {
-            Text("Choose Your Content Sources")
-                .font(.title2.bold())
-                .padding(.top)
-                .accessibilityIdentifier("sourceSelectionTitle")
+            // Title is now in the navigation bar
             
             Text("Select at least 3 sources to personalize your feed")
+                .padding(.top, 20)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -186,7 +184,7 @@ struct SourceResultRow: View {
                 }
             } icon: {
                 Image(systemName: source.type.icon)
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(.primary)
             }
             
             Spacer()
@@ -194,7 +192,7 @@ struct SourceResultRow: View {
             // Add/remove button
             Button(action: onSelect) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "plus.circle")
-                    .foregroundColor(isSelected ? .green : .accentColor)
+                    .foregroundColor(isSelected ? .primary : .primary)
                     .font(.title2)
             }
             .buttonStyle(.plain)
