@@ -9,33 +9,38 @@ struct SourceSelectionView: View {
     // MARK: - Body
     
     var body: some View {
-        VStack {
-            // Source type selector moved to top
+        ZStack {
+            List {
+            // Use TypeSelector in the same way as CombinedLibraryView
             TypeSelectorView(selectedType: $coordinator.selectedSourceType)
-                .padding(.top, 20)
+                .asListRow()
                 .accessibilityIdentifier("sourceTypeSelector")
+                
+            // Description text in its own section
+            Section {
+                Text("Select at least 3 sources to personalize your feed")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.leading)
+                    .accessibilityIdentifier("sourceSelectionDescription")
+            }
             
-            // Title is now in the navigation bar
-            Text("Select at least 3 sources to personalize your feed")
-                .padding(.top, 10)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-                .accessibilityIdentifier("sourceSelectionDescription")
-            
-            // Using the native searchable modifier instead of custom search field
-            Spacer().frame(height: 16)
-            
+            // Content area - either search results, error, or recommended sources
             if coordinator.isSearching {
                 // Loading indicator
-                ProgressView()
-                    .controlSize(.large)
-                    .padding()
+                Section {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                            .controlSize(.large)
+                            .padding()
+                        Spacer()
+                    }
                     .accessibilityIdentifier("searchingIndicator")
+                }
             } else if !coordinator.searchResults.isEmpty {
                 // Search results
-                List {
+                Section(header: Text("Search Results")) {
                     ForEach(coordinator.searchResults) { source in
                         SourceResultRow(
                             source: source,
@@ -46,69 +51,54 @@ struct SourceSelectionView: View {
                         )
                     }
                 }
-                #if os(iOS) || os(visionOS)
-                .listStyle(.insetGrouped)
-                #else
-                .listStyle(.inset)
-                #endif
                 .accessibilityIdentifier("searchResultsList")
             } else if let error = coordinator.errorMessage {
                 // Error message
-                VStack {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundColor(.red)
-                        .padding()
-                    
-                    Text("Search Error")
-                        .font(.headline)
-                    
-                    Text(error)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding()
+                Section {
+                    VStack {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.largeTitle)
+                            .foregroundColor(.red)
+                            .padding()
+                        
+                        Text("Search Error")
+                            .font(.headline)
+                        
+                        Text(error)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .accessibilityIdentifier("searchErrorView")
                 }
-                .padding()
-                .accessibilityIdentifier("searchErrorView")
             } else {
-                // Recommended sources
-                recommendedSourcesList
+                // Recommended sources in a list section
+                Section(header: Text("Recommended Sources")) {
+                    ForEach(filteredRecommendedSources) { source in
+                        SourceResultRow(
+                            source: source,
+                            isSelected: coordinator.isSourceSelected(source),
+                            onSelect: {
+                                coordinator.toggleSource(source)
+                            }
+                        )
+                    }
+                }
+                .accessibilityIdentifier("recommendedSourcesList")
             }
             
-            Spacer()
-            
-            // Navigation buttons
-            HStack {
-                Button(action: {
-                    coordinator.goTo(step: .welcome)
-                }) {
-                    Image(systemName: "chevron.backward.circle.fill")
-                        .font(.system(size: 32))
-                }
-                .buttonStyle(.plain)
-                .foregroundColor(.gray.opacity(0.8))
-                .accessibilityLabel("Back")
-                .accessibilityIdentifier("backButton")
-                
-                Spacer()
-                
-                Button(action: {
-                    coordinator.advance()
-                }) {
-                    Image(systemName: "chevron.forward.circle.fill")
-                        .font(.system(size: 32))
-                }
-                .buttonStyle(.plain)
-                .foregroundColor(.primary)
-                .opacity(coordinator.selectedSources.count < 1 ? 0.5 : 1.0)
-                .disabled(coordinator.selectedSources.count < 1) // Typically would require more, reduced for demo
-                .accessibilityLabel("Continue")
-                .accessibilityIdentifier("continueButton")
+            // Empty spacer at the bottom of the list for padding
+            Section {
+                Color.clear.frame(height: 80)
             }
-            .padding()
-            .padding(.bottom, 40) // Add bottom padding to ensure buttons are above page indicator
+            .listRowBackground(Color.clear)
         }
+        
+        .listStyle(.inset)
+        .scrollContentBackground(.visible)
         #if os(iOS) || os(visionOS)
         .searchable(text: $coordinator.searchText,
                     placement: .navigationBarDrawer(displayMode: .always),
@@ -127,31 +117,45 @@ struct SourceSelectionView: View {
             coordinator.searchText = ""
         }
         .accessibilityIdentifier("sourceSelectionScreen")
-    }
-    
-    // MARK: - Recommended Sources List
-    
-    /// List of recommended sources based on selected type
-    private var recommendedSourcesList: some View {
-        List {
-            Section(header: Text("Recommended Sources")) {
-                ForEach(filteredRecommendedSources) { source in
-                    SourceResultRow(
-                        source: source,
-                        isSelected: coordinator.isSourceSelected(source),
-                        onSelect: {
-                            coordinator.toggleSource(source)
-                        }
-                    )
+            
+            // Sticky navigation buttons at the bottom
+            VStack {
+                Spacer()
+                HStack {
+                    Button(action: {
+                        coordinator.goTo(step: .welcome)
+                    }) {
+                        Image(systemName: "chevron.backward")
+                            .font(.system(size: 24))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundColor(.gray.opacity(0.8))
+                    .accessibilityLabel("Back")
+                    .accessibilityIdentifier("backButton")
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        coordinator.advance()
+                    }) {
+                        Image(systemName: "chevron.forward")
+                            .font(.system(size: 24))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundColor(.primary)
+                    .opacity(coordinator.selectedSources.count < 1 ? 0.5 : 1.0)
+                    .disabled(coordinator.selectedSources.count < 1)
+                    .accessibilityLabel("Continue")
+                    .accessibilityIdentifier("continueButton")
                 }
+                .padding(.horizontal, 32)
+                .padding(.vertical, 16)
+                .background(.thinMaterial)
+                .cornerRadius(16)
+                .padding(.bottom, 24)
+                .padding(.horizontal, 24)
             }
         }
-        #if os(iOS) || os(visionOS)
-        .listStyle(.insetGrouped)
-        #else
-        .listStyle(.inset)
-        #endif
-        .accessibilityIdentifier("recommendedSourcesList")
     }
     
     // MARK: - Helper Methods
