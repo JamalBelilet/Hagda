@@ -9,65 +9,72 @@ import Foundation
 struct DailySummaryView: View {
     @Environment(AppModel.self) private var appModel
     @State private var showingSettings = false
-    @State private var navigateToDetails = false
+    
+    // Environment state to connect with parent navigation state
+    @Binding var showDailyDetails: Bool
+    
+    // Initialize with a default binding for preview support
+    init(showDailyDetails: Binding<Bool> = .constant(false)) {
+        self._showDailyDetails = showDailyDetails
+    }
     
     var body: some View {
-        Button {
-            navigateToDetails = true
-        } label: {
-            VStack(alignment: .leading, spacing: 16) {
-                // Date heading
-                HStack {
-                    Text(dateString)
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
+        ZStack {
+            Button {
+                showDailyDetails = true
+            } label: {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Date heading
+                    HStack {
+                        Text(dateString)
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                        
+                        Spacer()
+                        
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Image(systemName: "gearshape")
+                                .foregroundColor(.accentColor)
+                        }
+                        .buttonStyle(.plain)
+                    }
                     
-                    Spacer()
+                    // Summary text
+                    Text(generateSummary())
+                        .font(.body)
+                        .lineSpacing(5)
                     
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Image(systemName: "gearshape")
+                    // Sources attribution
+                    HStack(spacing: 0) {
+                        Text("Curated from ")
+                        Text(generateSourceAttribution())
+                            .foregroundStyle(.secondary)
+                    }
+                    .font(.footnote)
+                    .padding(.top, 4)
+                    
+                    // "See details" indicator without chevron
+                    HStack {
+                        Spacer()
+                        
+                        Text("See details")
+                            .font(.caption)
+                            .fontWeight(.medium)
                             .foregroundColor(.accentColor)
                     }
-                    .buttonStyle(.plain)
+                    .padding(.top, 4)
                 }
-                
-                // Summary text
-                Text(generateSummary())
-                    .font(.body)
-                    .lineSpacing(5)
-                
-                // Sources attribution
-                HStack(spacing: 0) {
-                    Text("Curated from ")
-                    Text(generateSourceAttribution())
-                        .foregroundStyle(.secondary)
-                }
-                .font(.footnote)
-                .padding(.top, 4)
-                
-                // "See details" indicator without chevron
-                HStack {
-                    Spacer()
-                    
-                    Text("See details")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(.accentColor)
-                }
-                .padding(.top, 4)
+                .padding()
+                .background(Color.gray.opacity(0.2))
+                .cornerRadius(12)
+                .padding(.vertical, 4)
             }
-            .padding()
-            .background(Color.gray.opacity(0.2))
-            .cornerRadius(12)
-            .padding(.vertical, 4)
+            .buttonStyle(PlainButtonStyle())
+            .accessibilityIdentifier("DailySummary")
         }
-        .buttonStyle(PlainButtonStyle())
-        .accessibilityIdentifier("DailySummary")
-        .navigationDestination(isPresented: $navigateToDetails) {
-            DailyBriefDetailView()
-        }
+        // Navigation destination is now handled by the parent view
         .sheet(isPresented: $showingSettings) {
             NavigationStack {
                 DailySummarySettingsView()
@@ -263,68 +270,76 @@ struct ContinueItemsView: View {
     @Environment(AppModel.self) private var appModel
     @State private var continueItems: [ContentItem] = []
     @State private var isRefreshing = false
-    @State private var selectedItem: ContentItem?
-    @State private var showItemDetail = false
-    @State private var showAllItems = false
+    
+    // Use parent's navigation state
+    @Binding var selectedContentItem: ContentItem?
+    @Binding var showContentDetail: Bool
+    @Binding var showAllItems: Bool
+    
+    // Initialize with default bindings for preview support
+    init(
+        selectedContentItem: Binding<ContentItem?> = .constant(nil),
+        showContentDetail: Binding<Bool> = .constant(false),
+        showAllItems: Binding<Bool> = .constant(false)
+    ) {
+        self._selectedContentItem = selectedContentItem
+        self._showContentDetail = showContentDetail
+        self._showAllItems = showAllItems
+    }
     
     // Maximum number of items to show in the feed view
     private let maxItemsInFeed = 3
     
     var body: some View {
-        VStack(spacing: 0) {
-            if continueItems.isEmpty {
-                emptyStateView
-            } else {
-                // Show limited items in the feed
-                let limitedItems = Array(continueItems.prefix(maxItemsInFeed))
-                
-                ForEach(limitedItems) { item in
-                    VStack(spacing: 0) {
-                        // Main row with content and progress
-                        Button {
-                            selectedItem = item
-                            showItemDetail = true
-                        } label: {
-                            continueItemRow(for: item)
-                                .padding(.bottom, 12)
+        ZStack {
+            VStack(spacing: 0) {
+                if continueItems.isEmpty {
+                    emptyStateView
+                } else {
+                    // Show limited items in the feed
+                    let limitedItems = Array(continueItems.prefix(maxItemsInFeed))
+                    
+                    ForEach(limitedItems) { item in
+                        VStack(spacing: 0) {
+                            // Main row with content and progress
+                            Button {
+                                selectedContentItem = item
+                                showContentDetail = true
+                            } label: {
+                                continueItemRow(for: item)
+                                    .padding(.bottom, 12)
+                            }
+                            .buttonStyle(.plain)
+                            
+                            // Preview of remaining content - separate button with same action
+                            Button {
+                                selectedContentItem = item
+                                showContentDetail = true
+                            } label: {
+                                RemainingContentPreview(item: item)
+                            }
+                            .buttonStyle(.plain)
+                            
+                            // Add spacing after the entire item
+                            if item != limitedItems.last {
+                                Divider()
+                                    .padding(.vertical, 10)
+                            }
+                            
+                            // Add bottom padding for the entire section
+                            Spacer()
+                                .frame(height: 16)
                         }
-                        .buttonStyle(.plain)
-                        
-                        // Preview of remaining content - separate button with same action
-                        Button {
-                            selectedItem = item
-                            showItemDetail = true
-                        } label: {
-                            RemainingContentPreview(item: item)
-                        }
-                        .buttonStyle(.plain)
-                        
-                        // Add spacing after the entire item
-                        if item != limitedItems.last {
-                            Divider()
-                                .padding(.vertical, 10)
-                        }
-                        
-                        // Add bottom padding for the entire section
-                        Spacer()
-                            .frame(height: 16)
                     }
+                    
+                    // No "See All" button needed as we now use the section header for navigation
                 }
-                
-                // No "See All" button needed as we now use the section header for navigation
+            }
+            .refreshable {
+                await refreshContinueItems()
             }
         }
-        .navigationDestination(isPresented: $showItemDetail) {
-            if let item = selectedItem {
-                ContentDetailView(item: item)
-            }
-        }
-        .navigationDestination(isPresented: $showAllItems) {
-            ContinueReadingView()
-        }
-        .refreshable {
-            await refreshContinueItems()
-        }
+        // Navigation destinations are now handled by the parent view
         .onAppear {
             // Generate mocked continue items
             loadContent()

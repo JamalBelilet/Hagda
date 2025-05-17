@@ -5,56 +5,65 @@ struct ContinueReadingView: View {
     @Environment(AppModel.self) private var appModel
     @State private var continueItems: [ContentItem] = []
     @State private var isRefreshing = false
-    @State private var selectedItem: ContentItem?
-    @State private var showItemDetail = false
+    
+    // Connect to the parent view's navigation state
+    @Binding var selectedContentItem: ContentItem?
+    @Binding var showContentDetail: Bool
+    
+    // Initialize with default bindings for preview support
+    init(
+        selectedContentItem: Binding<ContentItem?> = .constant(nil),
+        showContentDetail: Binding<Bool> = .constant(false)
+    ) {
+        self._selectedContentItem = selectedContentItem
+        self._showContentDetail = showContentDetail
+    }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                if continueItems.isEmpty {
-                    emptyStateView
-                } else {
-                    ForEach(continueItems) { item in
-                        VStack(spacing: 0) {
-                            // Main row with content and progress
-                            Button {
-                                selectedItem = item
-                                showItemDetail = true
-                            } label: {
-                                continueItemRow(for: item)
-                                    .padding(.bottom, 12)
+        ZStack {
+            ScrollView {
+                VStack(spacing: 0) {
+                    if continueItems.isEmpty {
+                        emptyStateView
+                    } else {
+                        ForEach(continueItems) { item in
+                            VStack(spacing: 0) {
+                                // Main row with content and progress
+                                Button {
+                                    selectedContentItem = item
+                                    showContentDetail = true
+                                } label: {
+                                    continueItemRow(for: item)
+                                        .padding(.bottom, 12)
+                                }
+                                .buttonStyle(.plain)
+                                
+                                // Preview of remaining content - separate button with same action
+                                Button {
+                                    selectedContentItem = item
+                                    showContentDetail = true
+                                } label: {
+                                    RemainingContentPreview(item: item)
+                                }
+                                .buttonStyle(.plain)
+                                
+                                // Add spacing after the entire item
+                                if item != continueItems.last {
+                                    Divider()
+                                        .padding(.vertical, 10)
+                                }
+                                
+                                // Add bottom padding for the entire section
+                                Spacer()
+                                    .frame(height: 16)
                             }
-                            .buttonStyle(.plain)
-                            
-                            // Preview of remaining content - separate button with same action
-                            Button {
-                                selectedItem = item
-                                showItemDetail = true
-                            } label: {
-                                RemainingContentPreview(item: item)
-                            }
-                            .buttonStyle(.plain)
-                            
-                            // Add spacing after the entire item
-                            if item != continueItems.last {
-                                Divider()
-                                    .padding(.vertical, 10)
-                            }
-                            
-                            // Add bottom padding for the entire section
-                            Spacer()
-                                .frame(height: 16)
                         }
                     }
                 }
-            }
-            .padding()
-            .navigationDestination(isPresented: $showItemDetail) {
-                if let item = selectedItem {
-                    ContentDetailView(item: item)
-                }
+                .padding()
             }
         }
+        // Navigation destination is now handled by the parent view
         .navigationTitle("Continue Reading")
         .refreshable {
             await refreshContinueItems()

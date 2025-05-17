@@ -9,6 +9,9 @@ struct FeedView: View {
     @State private var searchText = ""
     @State private var showContinueAll = false
     @State private var showTrendingAll = false
+    @State private var showDailyDetails = false
+    @State private var showContentDetail = false
+    @State private var selectedContentItem: ContentItem?
     @Environment(AppModel.self) private var appModel
     
     // MARK: - Body
@@ -54,110 +57,129 @@ struct FeedView: View {
         .navigationDestination(for: Source.self) { source in
             SourceView(source: source)
         }
+        // Add these navigation destinations at the root level to avoid warnings
+        .navigationDestination(isPresented: $showContinueAll) {
+            ContinueReadingView(
+                selectedContentItem: $selectedContentItem,
+                showContentDetail: $showContentDetail
+            )
+        }
+        .navigationDestination(isPresented: $showTrendingAll) {
+            TrendingContentView()
+        }
+        .navigationDestination(isPresented: $showDailyDetails) {
+            DailyBriefDetailView()
+        }
+        .navigationDestination(isPresented: $showContentDetail) {
+            if let item = selectedContentItem {
+                ContentDetailView(item: item)
+            }
+        }
     }
     
     // MARK: - UI Components
     
     /// List of sources grouped by type
     private var sourcesList: some View {
-        List {
-            // Daily Summary Section
-            Section {
-                DailySummaryView()
-            } header: {
-                SectionHeaderView(
-                    title: "Today's Brief",
-                    description: "Your personalized overview for today",
-                    icon: "newspaper"
-                )
-            }
-            .headerProminence(.increased)
-            
-            // Continue Reading/Listening Section
-            Section {
-                ContinueItemsView()
-                
-                // View All button at bottom of section - it's the last item so no bottom separator needed
-                ViewAllButton(title: "Continue", action: { showContinueAll = true })
-            } header: {
-                SectionHeaderView(
-                    title: "Continue",
-                    description: "Resume where you left off",
-                    icon: "bookmark"
-                )
-            }
-            .navigationDestination(isPresented: $showContinueAll) {
-                ContinueReadingView()
-            }
-            .headerProminence(.increased)
-            
-            // Top Content Section
-            Section {
-                TopContentView()
-                
-                // View All button at bottom of section - it's the last item so no bottom separator needed
-                ViewAllButton(title: "Trending", action: { showTrendingAll = true })
-
-            } header: {
-                SectionHeaderView(
-                    title: "Trending Now",
-                    description: "Popular content from your sources",
-                    icon: "star"
-                )
-            }
-            .navigationDestination(isPresented: $showTrendingAll) {
-                TrendingContentView()
-            }
-            .headerProminence(.increased)
-            
-            // Group sources by type
-            let groupedSources = Dictionary(grouping: appModel.feedSources) { $0.type }
-            
-            // Articles section
-            createSourceSection(
-                for: .article,
-                sources: groupedSources[.article, default: []]
-            )
-            
-            // Reddit section
-            createSourceSection(
-                for: .reddit,
-                sources: groupedSources[.reddit, default: []]
-            )
-            
-            // Social media section (Bluesky and Mastodon)
-            let blueskySource = groupedSources[.bluesky, default: []]
-            let mastodonSource = groupedSources[.mastodon, default: []]
-            let socialSources = blueskySource + mastodonSource
-            
-            if !socialSources.isEmpty {
+        ZStack {
+            List {
+                // Daily Summary Section
                 Section {
-                    ForEach(socialSources) { source in
-                        sourceNavigationLink(for: source)
-                    }
+                    DailySummaryView(showDailyDetails: $showDailyDetails)
                 } header: {
                     SectionHeaderView(
-                        title: "Social Media", 
-                        description: "Updates from people you follow",
-                        icon: "person.2"
+                        title: "Today's Brief",
+                        description: "Your personalized overview for today",
+                        icon: "newspaper"
                     )
                 }
                 .headerProminence(.increased)
+                
+                // Continue Reading/Listening Section
+                Section {
+                    ContinueItemsView(
+                        selectedContentItem: $selectedContentItem, 
+                        showContentDetail: $showContentDetail,
+                        showAllItems: $showContinueAll
+                    )
+                    
+                    // View All button at bottom of section - it's the last item so no bottom separator needed
+                    ViewAllButton(title: "Continue", action: { showContinueAll = true })
+                } header: {
+                    SectionHeaderView(
+                        title: "Continue",
+                        description: "Resume where you left off",
+                        icon: "bookmark"
+                    )
+                }
+                .headerProminence(.increased)
+                
+                // Top Content Section
+                Section {
+                    TopContentView()
+                    
+                    // View All button at bottom of section - it's the last item so no bottom separator needed
+                    ViewAllButton(title: "Trending", action: { showTrendingAll = true })
+
+                } header: {
+                    SectionHeaderView(
+                        title: "Trending Now",
+                        description: "Popular content from your sources",
+                        icon: "star"
+                    )
+                }
+                .headerProminence(.increased)
+                
+                // Group sources by type
+                let groupedSources = Dictionary(grouping: appModel.feedSources) { $0.type }
+                
+                // Articles section
+                createSourceSection(
+                    for: .article,
+                    sources: groupedSources[.article, default: []]
+                )
+                
+                // Reddit section
+                createSourceSection(
+                    for: .reddit,
+                    sources: groupedSources[.reddit, default: []]
+                )
+                
+                // Social media section (Bluesky and Mastodon)
+                let blueskySource = groupedSources[.bluesky, default: []]
+                let mastodonSource = groupedSources[.mastodon, default: []]
+                let socialSources = blueskySource + mastodonSource
+                
+                if !socialSources.isEmpty {
+                    Section {
+                        ForEach(socialSources) { source in
+                            sourceNavigationLink(for: source)
+                        }
+                    } header: {
+                        SectionHeaderView(
+                            title: "Social Media", 
+                            description: "Updates from people you follow",
+                            icon: "person.2"
+                        )
+                    }
+                    .headerProminence(.increased)
+                }
+                
+                // Podcasts section
+                createSourceSection(
+                    for: .podcast,
+                    sources: groupedSources[.podcast, default: []]
+                )
             }
-            
-            // Podcasts section
-            createSourceSection(
-                for: .podcast,
-                sources: groupedSources[.podcast, default: []]
-            )
+            .listStyle(.inset)
+            .scrollContentBackground(.visible)
+            .background(Color(.gray).opacity(0.1))
+            .refreshable {
+                await refreshFeed()
+            }
+            .accessibilityIdentifier("FeedList")
         }
-        .listStyle(.inset)
-        .scrollContentBackground(.visible)
-        .background(Color(.gray).opacity(0.1))
-        .refreshable {
-            await refreshFeed()
-        }
-        .accessibilityIdentifier("FeedList")
+        // Navigation destinations moved to the root level of the view
     }
     
     // MARK: - Helper Methods
