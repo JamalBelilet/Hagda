@@ -106,3 +106,50 @@ XCTAssertTrue(app.navigationBars[navBarIdentifier].exists)
 ```
 
 **Priority:** High
+
+## Issue 5: Implement User Onboarding Flow
+
+**Title:** Implement Minimalistic User Onboarding Experience
+
+**Description:**
+Currently, new users are dropped directly into the app without guidance, potentially seeing empty states and having no clear direction on how to start using Hagda effectively. We need a streamlined onboarding experience that helps users set up their content sources and customize their experience while maintaining the app's minimalist design approach.
+
+**Current state:**
+- No onboarding flow exists
+- New users may see empty states if they don't immediately discover how to add sources
+- Users may not discover the daily brief customization options
+- App relies on mocked data for initial user experience
+
+**Tasks:**
+- [ ] Create a multi-step onboarding flow using SwiftUI's latest navigation capabilities
+- [ ] Design source selection UI that presents popular/recommended sources for quick selection
+- [ ] Integrate daily brief customization into the onboarding flow
+- [ ] Implement search functionality for finding specific sources during onboarding
+- [ ] Add persistence layer to save onboarding completion status
+- [ ] Create smooth transition from onboarding to main app experience
+- [ ] Remove mocked data once user has completed onboarding
+
+**Technical approach:**
+1. Create an `OnboardingCoordinator` class to manage the flow state
+2. Use `TabView` with `.tabViewStyle(.page)` for step navigation
+3. Implement `@Observable` state management for the onboarding process
+4. Add `isOnboardingComplete` flag to `AppModel`
+5. Use `AppStorage` for persisting onboarding completion status
+6. Create specialized versions of existing views for the onboarding context:
+   - `OnboardingSourceSelectionView` based on `CombinedLibraryView`
+   - `OnboardingDailySummarySetupView` based on `DailySummarySettingsView`
+7. Add welcome and completion screens to bookend the experience
+
+**UI/UX considerations:**
+- Keep the flow to 3-4 screens maximum (Welcome, Source Selection, Daily Brief Setup, Completion)
+- Use progressive disclosure to avoid overwhelming new users
+- Include skip options while ensuring users have minimum viable content
+- Use animations and transitions that match the app's design language
+- Ensure cross-platform compatibility (iOS and macOS)
+
+**Accessibility:**
+- All onboarding screens must maintain proper accessibility support
+- Add appropriate accessibility identifiers to support automated testing
+- Ensure keyboard navigation works for macOS users
+
+**Priority:** High

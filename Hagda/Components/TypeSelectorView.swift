@@ -22,18 +22,20 @@ struct TypeSelectorView: View {
                         HStack(spacing: 6) {
                             Image(systemName: type.icon)
                                 .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(selectedType != type ? Color.gray : Color.white)
-                            
                             if selectedType == type {
                                 Text(type.displayName)
                                     .font(.subheadline)
                                     .fontWeight(.medium)
                                     .lineLimit(1)
-                                    .foregroundColor(Color.white)
                                     .fixedSize(horizontal: true, vertical: false)
                                     .transition(.opacity)
                             }
                         }
+                        #if os(iOS) || os(visionOS)
+                        .foregroundColor(selectedType == type ? Color(.systemBackground) : .gray)
+                        #else
+                        .foregroundColor(selectedType == type ? Color(NSColor.windowBackgroundColor) : .gray)
+                        #endif
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                         .frame(maxWidth: selectedType != type ? .infinity : nil)

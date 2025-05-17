@@ -4,7 +4,7 @@ import SwiftUI
 struct SectionHeaderView: View {
     let title: String
     let description: String
-    let icon: String
+    let icon: String?
     
     var body: some View {
         headerContent
@@ -13,10 +13,12 @@ struct SectionHeaderView: View {
     private var headerContent: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                    .foregroundStyle(.secondary)
-                
+                if let icon = icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 16))
+                        .foregroundStyle(.secondary)
+                    
+                }
                 Text(title)
                     .font(.headline)
                     .fontWeight(.bold)

@@ -17,6 +17,7 @@ struct OnboardingView: View {
     // MARK: - Body
     
     var body: some View {
+        
         TabView(selection: $coordinator.currentStep) {
             // Welcome screen
             WelcomeView(coordinator: coordinator)
@@ -26,9 +27,9 @@ struct OnboardingView: View {
             NavigationStack {
                 SourceSelectionView(coordinator: coordinator)
                     .navigationTitle("Choose Your Content Sources")
-                    #if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS)
                     .navigationBarTitleDisplayMode(.large)
-                    #endif
+#endif
             }
             .tag(OnboardingCoordinator.OnboardingStep.sourceSelection)
             
@@ -36,9 +37,9 @@ struct OnboardingView: View {
             NavigationStack {
                 DailyBriefSetupView(coordinator: coordinator)
                     .navigationTitle("Customize Your Daily Brief")
-                    #if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS)
                     .navigationBarTitleDisplayMode(.large)
-                    #endif
+#endif
             }
             .tag(OnboardingCoordinator.OnboardingStep.dailyBriefSetup)
             
@@ -46,12 +47,12 @@ struct OnboardingView: View {
             CompletionView(coordinator: coordinator)
                 .tag(OnboardingCoordinator.OnboardingStep.completion)
         }
-        #if os(iOS) || os(visionOS)
-        .tabViewStyle(.page(indexDisplayMode: .always))
-        .indexViewStyle(.page(backgroundDisplayMode: .always))
-        #else
+        .ignoresSafeArea()
+#if os(iOS) || os(visionOS)
+        .tabViewStyle(.page(indexDisplayMode: .never))
+#else
         .tabViewStyle(.automatic)
-        #endif
+#endif
         .animation(.easeInOut, value: coordinator.currentStep)
         .onChange(of: coordinator.isOnboardingComplete) { _, isComplete in
             if isComplete {
@@ -61,6 +62,7 @@ struct OnboardingView: View {
             }
         }
         .accessibilityIdentifier("onboardingView")
+        
     }
 }
 

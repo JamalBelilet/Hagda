@@ -26,9 +26,16 @@ struct HagdaApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(appModel)
-                .accessibilityIdentifier("RootView")
+            Group {
+                if !appModel.isOnboardingComplete && !appModel.isTestingMode {
+                    OnboardingView()
+                        .environment(appModel)
+                } else {
+                    ContentView()
+                        .environment(appModel)
+                        .accessibilityIdentifier("RootView")
+                }
+            }
         }
     }
 }

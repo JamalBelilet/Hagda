@@ -6,7 +6,7 @@ struct DailySummarySettings {
     var showWeather: Bool = true
     var includeTodayEvents: Bool = true
     var summarizeSource: Bool = true
-    var summaryLength: SummaryLength = .medium
+    var summaryLength: SummaryLength = .short
     var sortingOrder: SummarySort = .newest
     
     enum SummaryLength: String, CaseIterable, Identifiable {
@@ -45,6 +45,18 @@ class AppModel {
     
     /// Flag for UI testing mode
     var isTestingMode: Bool = false
+    
+    /// Flag to track if onboarding has been completed
+    var isOnboardingComplete: Bool = false
+    
+    /// Daily brief categories selected during onboarding
+    var dailyBriefCategories: Set<String> = ["Technology", "World News"]
+    
+    /// Daily brief time selected during onboarding
+    var dailyBriefTime: Date = Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date()
+    
+    /// UserDefaults access for persistence
+    private let defaults = UserDefaults.standard
     
     // MARK: - Computed Properties
     
@@ -96,8 +108,13 @@ class AppModel {
     init(isTestingMode: Bool = false) {
         self.isTestingMode = isTestingMode
         
+        // Load saved values from UserDefaults
+        if !isTestingMode {
+            loadFromUserDefaults()
+        }
+        
         // Select some default sources to populate the feed
-        if !isTestingMode && selectedSources.isEmpty {
+        if !isTestingMode && selectedSources.isEmpty && !isOnboardingComplete {
             // Select one of each type to demonstrate all section types
             let typesToInclude: [SourceType] = [.article, .reddit, .bluesky, .podcast]
             
@@ -115,6 +132,37 @@ class AppModel {
             // Ensure selectedSources is empty for tests
             selectedSources.removeAll()
         }
+    }
+    
+    /// Load saved values from UserDefaults
+    private func loadFromUserDefaults() {
+        isOnboardingComplete = defaults.bool(forKey: "isOnboardingComplete")
+        
+        if let categoriesArray = defaults.stringArray(forKey: "dailyBriefCategories") {
+            dailyBriefCategories = Set(categoriesArray)
+        }
+        
+        if let timeInterval = defaults.object(forKey: "dailyBriefTime") as? TimeInterval {
+            dailyBriefTime = Date(timeIntervalSince1970: timeInterval)
+        }
+    }
+    
+    /// Save onboarding completion status to UserDefaults
+    func saveOnboardingComplete(_ completed: Bool) {
+        isOnboardingComplete = completed
+        defaults.set(completed, forKey: "isOnboardingComplete")
+    }
+    
+    /// Save daily brief categories to UserDefaults
+    func saveDailyBriefCategories(_ categories: Set<String>) {
+        dailyBriefCategories = categories
+        defaults.set(Array(categories), forKey: "dailyBriefCategories")
+    }
+    
+    /// Save daily brief time to UserDefaults
+    func saveDailyBriefTime(_ time: Date) {
+        dailyBriefTime = time
+        defaults.set(time.timeIntervalSince1970, forKey: "dailyBriefTime")
     }
     
     // MARK: - Setting Updates
