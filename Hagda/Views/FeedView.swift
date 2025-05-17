@@ -22,6 +22,14 @@ struct FeedView: View {
                 EmptyStateView()
                     .accessibilityIdentifier("EmptyStateView")
                     .background(Color(.gray).opacity(0.1))
+                    .onAppear {
+                        // Debug information
+                        print("DEBUG: Selected sources count: \(appModel.selectedSources.count)")
+                        print("DEBUG: All sources count: \(appModel.sources.count)")
+                        for source in appModel.sources {
+                            print("DEBUG: Source \(source.name) (ID: \(source.id)) - Selected: \(appModel.selectedSources.contains(source.id))")
+                        }
+                    }
             } else {
                 sourcesList
             }
@@ -37,6 +45,17 @@ struct FeedView: View {
                 }
                 .accessibilityIdentifier("LibraryButton")
             }
+            
+            // Debug/test button only in development builds
+            #if DEBUG
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink(value: "test-onboarding") {
+                    Image(systemName: "ladybug")
+                        .font(.system(size: 18))
+                }
+                .accessibilityIdentifier("TestButton")
+            }
+            #endif
             #else
             ToolbarItem {
                 NavigationLink(value: "library") {
@@ -46,12 +65,25 @@ struct FeedView: View {
                 }
                 .accessibilityIdentifier("LibraryButton")
             }
+            
+            // Debug/test button only in development builds
+            #if DEBUG
+            ToolbarItem {
+                NavigationLink(value: "test-onboarding") {
+                    Image(systemName: "ladybug")
+                        .font(.system(size: 18))
+                }
+                .accessibilityIdentifier("TestButton")
+            }
+            #endif
             #endif
         }
         .searchable(text: $searchText, prompt: "Search")
         .navigationDestination(for: String.self) { value in
             if value == "library" {
                 CombinedLibraryView()
+            } else if value == "test-onboarding" {
+                TestOnboardingView()
             }
         }
         .navigationDestination(for: Source.self) { source in

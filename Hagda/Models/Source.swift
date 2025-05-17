@@ -66,7 +66,7 @@ enum SourceType: String, CaseIterable, Identifiable {
 
 /// Represents a content source that can be followed and displayed in the feed
 struct Source: Identifiable, Hashable {
-    let id = UUID()
+    let id: UUID
     let name: String
     let type: SourceType
     let description: String
@@ -74,13 +74,42 @@ struct Source: Identifiable, Hashable {
     let artworkUrl: String?
     let feedUrl: String?
     
-    init(name: String, type: SourceType, description: String, handle: String? = nil, artworkUrl: String? = nil, feedUrl: String? = nil) {
+    // Main initializer with all parameters
+    init(id: UUID, name: String, type: SourceType, description: String, handle: String? = nil, artworkUrl: String? = nil, feedUrl: String? = nil) {
+        self.id = id
         self.name = name
         self.type = type
         self.description = description
         self.handle = handle
         self.artworkUrl = artworkUrl
         self.feedUrl = feedUrl
+    }
+    
+    // Convenience initializer that generates a deterministic ID
+    init(name: String, type: SourceType, description: String, handle: String? = nil, artworkUrl: String? = nil, feedUrl: String? = nil) {
+        // Generate a deterministic ID based on name and type
+        // This ensures the same source will have the same ID even when created multiple times
+        var hasher = Hasher()
+        hasher.combine(name)
+        hasher.combine(type.rawValue)
+        // Add handle to hasher if it exists for more uniqueness
+        if let handle = handle {
+            hasher.combine(handle)
+        }
+        let hashValue = hasher.finalize()
+        let id = UUID(uuid: (
+            UInt8(truncatingIfNeeded: hashValue),
+            UInt8(truncatingIfNeeded: hashValue >> 8),
+            UInt8(truncatingIfNeeded: hashValue >> 16),
+            UInt8(truncatingIfNeeded: hashValue >> 24),
+            UInt8(truncatingIfNeeded: hashValue >> 32),
+            UInt8(truncatingIfNeeded: hashValue >> 40),
+            UInt8(truncatingIfNeeded: hashValue >> 48),
+            UInt8(truncatingIfNeeded: hashValue >> 56),
+            0, 0, 0, 0, 0, 0, 0, 0
+        ))
+        
+        self.init(id: id, name: name, type: type, description: description, handle: handle, artworkUrl: artworkUrl, feedUrl: feedUrl)
     }
     
     // MARK: - Hashable Conformance
@@ -91,6 +120,21 @@ struct Source: Identifiable, Hashable {
     
     static func == (lhs: Source, rhs: Source) -> Bool {
         lhs.id == rhs.id
+    }
+    
+    // MARK: - Debug
+    
+    /// Debug description of the source
+    var debugDescription: String {
+        return "Source(\(name), type: \(type), id: \(id.uuidString.prefix(8)))"
+    }
+    
+    /// Print debug information about this source
+    func printDebugInfo() {
+        print("DEBUG: Source: \(name) (Type: \(type))")
+        print("DEBUG: ID: \(id)")
+        print("DEBUG: Handle: \(handle ?? "nil")")
+        print("DEBUG: Description: \(description)")
     }
 }
 

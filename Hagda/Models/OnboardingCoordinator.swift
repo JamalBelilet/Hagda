@@ -177,18 +177,24 @@ class OnboardingCoordinator: ObservableObject {
     
     /// Complete the onboarding process and save settings to the app model
     func completeOnboarding() {
-        // Add any new sources from search to the app model's source catalog
-        for source in selectedSources {
-            if !appModel.sources.contains(where: { $0.id == source.id }) {
-                appModel.sources.append(source)
+        // Clear previous selections first
+        appModel.selectedSources.removeAll()
+        
+        // For each selected source in onboarding, find or add it to the app model
+        for selectedSource in selectedSources {
+            // Use the new findSource method to find the existing source by name and type
+            if let existingSource = appModel.findSource(name: selectedSource.name, type: selectedSource.type) {
+                // If the source already exists in the catalog, select it by its ID
+                appModel.selectedSources.insert(existingSource.id)
+            } else {
+                // If it's a new source from search, add it to the catalog and select it
+                appModel.sources.append(selectedSource)
+                appModel.selectedSources.insert(selectedSource.id)
             }
         }
         
-        // Create a set of selected source IDs
-        let selectedSourceIds = Set(selectedSources.map { $0.id })
-        
         // Save selected sources to UserDefaults
-        appModel.saveSelectedSources(selectedSourceIds)
+        appModel.saveSelectedSources(appModel.selectedSources)
         
         // Save daily brief settings
         appModel.saveDailyBriefCategories(dailyBriefCategories)
@@ -197,5 +203,15 @@ class OnboardingCoordinator: ObservableObject {
         // Mark onboarding as complete
         isOnboardingComplete = true
         appModel.saveOnboardingComplete(true)
+        
+        // Debug information
+        print("DEBUG: After completing onboarding:")
+        print("DEBUG: Selected sources count: \(appModel.selectedSources.count)")
+        print("DEBUG: Feed sources count: \(appModel.feedSources.count)")
+        for source in appModel.sources {
+            if appModel.selectedSources.contains(source.id) {
+                print("DEBUG: Selected source: \(source.name) (ID: \(source.id))")
+            }
+        }
     }
 }

@@ -10,14 +10,13 @@ struct OnboardingView: View {
     // MARK: - Initialization
     
     init() {
-        // Create coordinator with reference to app model
+        // Initialize with a placeholder coordinator that will be updated in onAppear
         _coordinator = State(initialValue: OnboardingCoordinator(appModel: AppModel.shared))
     }
     
     // MARK: - Body
     
     var body: some View {
-        
         TabView(selection: $coordinator.currentStep) {
             // Welcome screen
             WelcomeView(coordinator: coordinator)
@@ -62,7 +61,10 @@ struct OnboardingView: View {
             }
         }
         .accessibilityIdentifier("onboardingView")
-        
+        .onAppear {
+            // Create a new coordinator with the actual environment AppModel
+            coordinator = OnboardingCoordinator(appModel: appModel)
+        }
     }
 }
 

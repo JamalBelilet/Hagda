@@ -228,9 +228,20 @@ class AppModel {
     
     /// Add a new custom source
     func addSource(_ source: Source) {
-        sources.append(source)
-        // Automatically select the newly added source
-        selectedSources.insert(source.id)
+        // Check if the source already exists by name and type
+        if let existingSource = findSource(name: source.name, type: source.type) {
+            // If it exists, select it instead of adding a duplicate
+            selectedSources.insert(existingSource.id)
+        } else {
+            // If it's a new source, add it and select it
+            sources.append(source)
+            selectedSources.insert(source.id)
+        }
+    }
+    
+    /// Find a source by name and type
+    func findSource(name: String, type: SourceType) -> Source? {
+        return sources.first { $0.name == name && $0.type == type }
     }
     
     // MARK: - API Services
