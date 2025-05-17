@@ -35,7 +35,9 @@ struct WelcomeView: View {
                 coordinator.advance()
             }
             .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
             .controlSize(.large)
+            .padding(.horizontal, 40)
             .accessibilityIdentifier("getStartedButton")
             
             Button("Skip Setup") {

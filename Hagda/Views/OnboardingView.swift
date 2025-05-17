@@ -23,12 +23,24 @@ struct OnboardingView: View {
                 .tag(OnboardingCoordinator.OnboardingStep.welcome)
             
             // Source selection screen
-            SourceSelectionView(coordinator: coordinator)
-                .tag(OnboardingCoordinator.OnboardingStep.sourceSelection)
+            NavigationStack {
+                SourceSelectionView(coordinator: coordinator)
+                    .navigationTitle("Select Sources")
+                    #if os(iOS) || os(visionOS)
+                    .navigationBarTitleDisplayMode(.inline)
+                    #endif
+            }
+            .tag(OnboardingCoordinator.OnboardingStep.sourceSelection)
             
             // Daily brief setup screen
-            DailyBriefSetupView(coordinator: coordinator)
-                .tag(OnboardingCoordinator.OnboardingStep.dailyBriefSetup)
+            NavigationStack {
+                DailyBriefSetupView(coordinator: coordinator)
+                    .navigationTitle("Daily Brief")
+                    #if os(iOS) || os(visionOS)
+                    .navigationBarTitleDisplayMode(.inline)
+                    #endif
+            }
+            .tag(OnboardingCoordinator.OnboardingStep.dailyBriefSetup)
             
             // Completion screen
             CompletionView(coordinator: coordinator)

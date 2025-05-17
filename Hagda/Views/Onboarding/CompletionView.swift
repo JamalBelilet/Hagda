@@ -49,7 +49,9 @@ struct CompletionView: View {
                 coordinator.completeOnboarding()
             }
             .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
             .controlSize(.large)
+            .padding(.horizontal, 40)
             .padding(.bottom, 40) // Add bottom padding to ensure button is above page indicator
             .accessibilityIdentifier("startExploringButton")
         }

@@ -71,7 +71,10 @@ struct DailyBriefSetupView: View {
                 Button("Back") {
                     coordinator.goTo(step: .sourceSelection)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+                .controlSize(.regular)
+                .tint(.gray.opacity(0.8))
                 .accessibilityIdentifier("backButton")
                 
                 Spacer()
@@ -80,6 +83,8 @@ struct DailyBriefSetupView: View {
                     coordinator.advance()
                 }
                 .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+                .controlSize(.regular)
                 .disabled(coordinator.dailyBriefCategories.isEmpty)
                 .accessibilityIdentifier("continueButton")
             }

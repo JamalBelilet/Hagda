@@ -18,6 +18,8 @@ struct SourceSelectionView: View {
             Text("Select at least 3 sources to personalize your feed")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
                 .accessibilityIdentifier("sourceSelectionDescription")
             
             // Source type selector
@@ -26,25 +28,8 @@ struct SourceSelectionView: View {
                 .padding(.top)
                 .accessibilityIdentifier("sourceTypeSelector")
             
-            // Search bar
-            HStack {
-                TextField("Search \(coordinator.selectedSourceType.displayName.lowercased()) sources...", text: $coordinator.searchText)
-                    .textFieldStyle(.roundedBorder)
-                    .autocorrectionDisabled()
-                    #if os(iOS) || os(visionOS)
-                    .textInputAutocapitalization(.never)
-                    #endif
-                    .onSubmit {
-                        coordinator.searchSources()
-                    }
-                    .accessibilityIdentifier("sourceSearchField")
-                
-                Button(action: coordinator.searchSources) {
-                    Image(systemName: "magnifyingglass")
-                }
-                .accessibilityIdentifier("searchButton")
-            }
-            .padding(.horizontal)
+            // Using the native searchable modifier instead of custom search field
+            Spacer().frame(height: 16)
             
             if coordinator.isSearching {
                 // Loading indicator
@@ -102,7 +87,10 @@ struct SourceSelectionView: View {
                 Button("Back") {
                     coordinator.goTo(step: .welcome)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+                .controlSize(.regular)
+                .tint(.gray.opacity(0.8))
                 .accessibilityIdentifier("backButton")
                 
                 Spacer()
@@ -111,11 +99,30 @@ struct SourceSelectionView: View {
                     coordinator.advance()
                 }
                 .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+                .controlSize(.regular)
                 .disabled(coordinator.selectedSources.count < 1) // Typically would require more, reduced for demo
                 .accessibilityIdentifier("continueButton")
             }
             .padding()
             .padding(.bottom, 40) // Add bottom padding to ensure buttons are above page indicator
+        }
+        #if os(iOS) || os(visionOS)
+        .searchable(text: $coordinator.searchText,
+                    placement: .navigationBarDrawer(displayMode: .always),
+                    prompt: coordinator.selectedSourceType.searchPlaceholder)
+        .autocorrectionDisabled()
+        .textInputAutocapitalization(.never)
+        .onSubmit(of: .search, coordinator.searchSources)
+        #else
+        .searchable(text: $coordinator.searchText,
+                    prompt: coordinator.selectedSourceType.searchPlaceholder)
+        .autocorrectionDisabled()
+        .onSubmit(of: .search, coordinator.searchSources)
+        #endif
+        .onChange(of: coordinator.selectedSourceType) { _, _ in
+            // Update search placeholder when type changes
+            coordinator.searchText = ""
         }
         .accessibilityIdentifier("sourceSelectionScreen")
     }
