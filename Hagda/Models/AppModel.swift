@@ -151,8 +151,9 @@ class AppModel {
         }
         
         // Load selected sources
-        if let selectedSourceIds = defaults.array(forKey: "selectedSources") as? [String] {
-            selectedSources = Set(selectedSourceIds)
+        if let selectedSourceIdStrings = defaults.array(forKey: "selectedSources") as? [String] {
+            let sourceIds = selectedSourceIdStrings.compactMap { UUID(uuidString: $0) }
+            selectedSources = Set(sourceIds)
         }
     }
     
@@ -175,9 +176,11 @@ class AppModel {
     }
     
     /// Save selected sources to UserDefaults
-    func saveSelectedSources(_ sourceIds: Set<String>) {
+    func saveSelectedSources(_ sourceIds: Set<UUID>) {
         selectedSources = sourceIds
-        defaults.set(Array(sourceIds), forKey: "selectedSources")
+        // Convert UUIDs to strings for storage
+        let sourceIdStrings = sourceIds.map { $0.uuidString }
+        defaults.set(sourceIdStrings, forKey: "selectedSources")
     }
     
     // MARK: - Setting Updates

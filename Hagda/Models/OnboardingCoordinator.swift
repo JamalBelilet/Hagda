@@ -177,15 +177,15 @@ class OnboardingCoordinator: ObservableObject {
     
     /// Complete the onboarding process and save settings to the app model
     func completeOnboarding() {
-        // Create a set of selected source IDs
-        let selectedSourceIds = Set(selectedSources.map { $0.id })
-        
         // Add any new sources from search to the app model's source catalog
         for source in selectedSources {
             if !appModel.sources.contains(where: { $0.id == source.id }) {
                 appModel.sources.append(source)
             }
         }
+        
+        // Create a set of selected source IDs
+        let selectedSourceIds = Set(selectedSources.map { $0.id })
         
         // Save selected sources to UserDefaults
         appModel.saveSelectedSources(selectedSourceIds)
