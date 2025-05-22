@@ -10,13 +10,14 @@ struct ContentItem: Identifiable, Equatable {
     let type: SourceType
     let contentPreview: String
     let progressPercentage: Double
+    let metadata: [String: Any]
     
     // Implement Equatable to allow comparison of ContentItems
     static func == (lhs: ContentItem, rhs: ContentItem) -> Bool {
         lhs.id == rhs.id
     }
     
-    init(id: UUID = UUID(), title: String, subtitle: String, date: Date, type: SourceType, contentPreview: String = "", progressPercentage: Double = 0.0) {
+    init(id: UUID = UUID(), title: String, subtitle: String, date: Date, type: SourceType, contentPreview: String = "", progressPercentage: Double = 0.0, metadata: [String: Any] = [:]) {
         self.id = id
         self.title = title
         self.subtitle = subtitle
@@ -24,6 +25,7 @@ struct ContentItem: Identifiable, Equatable {
         self.type = type
         self.contentPreview = contentPreview
         self.progressPercentage = progressPercentage
+        self.metadata = metadata
     }
 }
 
@@ -155,14 +157,14 @@ extension ContentItem {
                     progressPercentage: Double.random(in: 0.25...0.75)
                 )
             case .mastodon:
-                let socialPreview = "The post elaborates on recent developments in the tech industry and provides context around emerging trends. Several links to resources and further reading are included."
+                // Return loading state for Mastodon posts since they're fetched from API
                 return ContentItem(
-                    title: "\(["Just published my thoughts on...", "Here's my latest project update...", "Interesting development in tech today...", "Anyone else notice this trend?"].randomElement()!)",
-                    subtitle: "@\(["techwriter", "opensourcefan", "devrelexpert", "codeartist"].randomElement()!)@mastodon.social",
+                    title: "Loading Mastodon posts...",
+                    subtitle: "Fetching latest updates",
                     date: date,
                     type: .mastodon,
-                    contentPreview: socialPreview,
-                    progressPercentage: Double.random(in: 0.25...0.75)
+                    contentPreview: "",
+                    progressPercentage: 0.0
                 )
             case .podcast:
                 let podcastPreview = """

@@ -187,7 +187,30 @@ struct MastodonStatus: Codable {
             date: parsedCreatedAt,
             type: .mastodon,
             contentPreview: cleanedContent,
-            progressPercentage: 0.0
+            progressPercentage: 0.0,
+            metadata: [
+                "statusId": id,
+                "statusUrl": url,
+                "accountId": account.id,
+                "accountUsername": account.username,
+                "accountDisplayName": account.display_name,
+                "accountHandle": account.acct,
+                "accountUrl": account.url,
+                "accountAvatar": account.avatar ?? "",
+                "repliesCount": replies_count ?? 0,
+                "reblogsCount": reblogs_count ?? 0,
+                "favouritesCount": favourites_count ?? 0,
+                "rawContent": content,
+                "mediaAttachments": media_attachments?.map { attachment in
+                    [
+                        "id": attachment.id,
+                        "type": attachment.type,
+                        "url": attachment.url,
+                        "previewUrl": attachment.preview_url,
+                        "description": attachment.description ?? ""
+                    ]
+                } ?? []
+            ]
         )
     }
 }
