@@ -393,14 +393,8 @@ class AppModel {
         } catch {
             print("Error fetching Reddit content: \(error.localizedDescription)")
             
-            // If we're in DEBUG mode, return some sample content for testing
-            #if DEBUG
-            print("Returning sample content for Reddit in DEBUG mode")
-            return ContentItem.samplesForSource(subreddit)
-            #else
-            // In production, rethrow the error
+            // Always rethrow the error - no fallback to sample data
             throw error
-            #endif
         }
     }
     

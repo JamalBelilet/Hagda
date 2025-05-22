@@ -141,40 +141,92 @@ struct RedditDetailView: View {
                 Text("Top Comments")
                     .font(.headline)
                 
-                if viewModel.comments.isEmpty {
+                if viewModel.isLoading {
+                    HStack {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Loading comments...")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                } else if let error = viewModel.error {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Unable to load comments")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Text(error.localizedDescription)
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding()
+                } else if viewModel.comments.isEmpty {
                     Text("No comments yet")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding()
                 } else {
                     ForEach(viewModel.comments) { comment in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(comment.authorName)
-                                    .fontWeight(.bold)
-                                
-                                Text("• \(comment.timestamp)")
-                                    .foregroundStyle(.secondary)
-                                
-                                Spacer()
-                                
-                                Text("↑ \(comment.upvotes)")
-                                    .foregroundStyle(.secondary)
-                            }
-                            .font(.caption)
-                            
-                            Text(comment.content)
-                                .font(.subheadline)
-                        }
-                        .padding()
-                        #if os(iOS) || os(visionOS)
-                        .background(Color(.secondarySystemBackground))
-                        #else
-                        .background(Color.gray.opacity(0.2))
-                        #endif
-                        .cornerRadius(8)
+                        CommentView(comment: comment, depth: 0)
                     }
                 }
+            }
+        }
+    }
+}
+
+// MARK: - Comment View
+
+/// View for displaying a single comment with support for nested replies
+struct CommentView: View {
+    let comment: RedditDetailViewModel.Comment
+    let depth: Int
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Comment content
+            HStack(alignment: .top, spacing: 0) {
+                // Depth indicator
+                if depth > 0 {
+                    Rectangle()
+                        .fill(Color.accentColor.opacity(0.3))
+                        .frame(width: 2)
+                        .padding(.trailing, 8)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(comment.authorName)
+                            .fontWeight(.bold)
+                        
+                        Text("• \(comment.timestamp)")
+                            .foregroundStyle(.secondary)
+                        
+                        Spacer()
+                        
+                        Text("↑ \(comment.upvotes)")
+                            .foregroundStyle(.secondary)
+                    }
+                    .font(.caption)
+                    
+                    Text(comment.content)
+                        .font(.subheadline)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(.leading, CGFloat(depth * 16))
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            #if os(iOS) || os(visionOS)
+            .background(Color(.secondarySystemBackground))
+            #else
+            .background(Color.gray.opacity(0.2))
+            #endif
+            .cornerRadius(8)
+            
+            // Nested replies
+            ForEach(comment.replies) { reply in
+                CommentView(comment: reply, depth: depth + 1)
             }
         }
     }

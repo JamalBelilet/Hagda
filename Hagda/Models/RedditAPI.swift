@@ -217,6 +217,86 @@ class RedditAPIService {
         }
     }
     
+    /// Reddit comment data model
+    struct RedditComment {
+        let id: String
+        let author: String?
+        let body: String?
+        let created_utc: Double
+        let ups: Int
+        let depth: Int
+        let replies: [RedditComment]
+    }
+    
+    /// Fetch comments for a Reddit post
+    /// - Parameters:
+    ///   - subreddit: The subreddit name
+    ///   - postId: The post ID (without t3_ prefix)
+    ///   - limit: Maximum number of top-level comments
+    /// - Returns: Array of comment data with nested replies
+    func fetchPostComments(subreddit: String, postId: String, limit: Int = 100) async throws -> [RedditComment] {
+        // Clean subreddit name
+        let cleanSubreddit = subreddit.starts(with: "r/") ? String(subreddit.dropFirst(2)) : subreddit
+        
+        // Construct URL
+        let url = URL(string: "\(baseURL)/r/\(cleanSubreddit)/comments/\(postId).json?limit=\(limit)&raw_json=1")!
+        
+        // Create request
+        var request = URLRequest(url: url)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Hagda/1.0", forHTTPHeaderField: "User-Agent")
+        
+        // Execute request
+        let (data, _) = try await session.data(for: request)
+        
+        // Parse JSON as generic structure first
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+              json.count > 1,
+              let commentsListing = json[1] as? [String: Any],
+              let commentsData = commentsListing["data"] as? [String: Any],
+              let children = commentsData["children"] as? [[String: Any]] else {
+            return []
+        }
+        
+        // Parse comments recursively
+        return parseComments(from: children, depth: 0)
+    }
+    
+    /// Recursively parse Reddit comments from JSON
+    private func parseComments(from children: [[String: Any]], depth: Int) -> [RedditComment] {
+        return children.compactMap { child in
+            guard let kind = child["kind"] as? String,
+                  kind == "t1",
+                  let data = child["data"] as? [String: Any] else {
+                return nil
+            }
+            
+            let id = data["id"] as? String ?? ""
+            let author = data["author"] as? String
+            let body = data["body"] as? String
+            let created_utc = data["created_utc"] as? Double ?? 0
+            let ups = data["ups"] as? Int ?? 0
+            
+            // Parse nested replies
+            var nestedReplies: [RedditComment] = []
+            if let replies = data["replies"] as? [String: Any],
+               let repliesData = replies["data"] as? [String: Any],
+               let repliesChildren = repliesData["children"] as? [[String: Any]] {
+                nestedReplies = parseComments(from: repliesChildren, depth: depth + 1)
+            }
+            
+            return RedditComment(
+                id: id,
+                author: author,
+                body: body,
+                created_utc: created_utc,
+                ups: ups,
+                depth: depth,
+                replies: nestedReplies
+            )
+        }
+    }
+    
     /// Fetch content from a subreddit
     /// - Parameters:
     ///   - subredditName: The name of the subreddit (without "r/")
@@ -271,7 +351,19 @@ class RedditAPIService {
                 date: date,
                 type: .reddit,
                 contentPreview: contentPreview,
-                progressPercentage: 0.0 // New posts start with 0 progress
+                progressPercentage: 0.0, // New posts start with 0 progress
+                metadata: [
+                    "postId": post.id,
+                    "author": post.author ?? "unknown",
+                    "subreddit": post.subreddit,
+                    "subredditPrefixed": post.subreddit_name_prefixed,
+                    "ups": post.ups ?? 0,
+                    "downs": post.downs ?? 0,
+                    "numComments": post.num_comments,
+                    "url": post.url ?? "",
+                    "permalink": post.permalink ?? "",
+                    "selftext": post.selftext ?? ""
+                ]
             )
         }
     }
