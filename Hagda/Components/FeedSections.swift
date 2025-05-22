@@ -796,14 +796,8 @@ struct TopContentView: View {
         // Reddit top items - temporarily removed until we integrate real trending data
         // TODO: Fetch trending Reddit posts from selected subreddits
         
-        if availableTypes.contains(.bluesky) {
-            topItems.append(ContentItem(
-                title: "Google's May 2024 update is hitting sites hard. Here's my analysis of what's changed and which industries are most affected...",
-                subtitle: "@glenngabe.bsky.social",
-                date: calendar.date(byAdding: .hour, value: -3, to: now) ?? now,
-                type: .bluesky
-            ))
-        }
+        // Bluesky top items - temporarily removed until we integrate real trending data
+        // TODO: Fetch trending Bluesky posts from followed accounts
         
         if availableTypes.contains(.podcast) {
             topItems.append(ContentItem(

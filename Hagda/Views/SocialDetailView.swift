@@ -157,7 +157,26 @@ struct SocialDetailView: View {
                 Text("Replies")
                     .font(.headline)
                 
-                if viewModel.replies.isEmpty {
+                if viewModel.isLoading {
+                    HStack {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Loading replies...")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                } else if let error = viewModel.error {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Unable to load replies")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Text(error.localizedDescription)
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding()
+                } else if viewModel.replies.isEmpty {
                     Text("No replies yet")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)

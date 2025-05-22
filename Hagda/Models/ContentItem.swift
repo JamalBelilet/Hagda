@@ -143,14 +143,14 @@ extension ContentItem {
                     progressPercentage: 0.0
                 )
             case .bluesky:
-                let socialPreview = "The thread continues with additional insights about the latest technology trends and practical advice for implementation. There's a discussion about potential use cases and limitations."
+                // Return empty item - real data should come from Bluesky API
                 return ContentItem(
-                    title: "\(["Just shipped a new feature for...", "Thoughts on the latest tech trends...", "Working on something exciting...", "Anyone going to the tech conference?"].randomElement()!)",
-                    subtitle: "@\(["skypro", "techblogger", "devguru", "codemaster"].randomElement()!).bsky.social",
+                    title: "Loading Bluesky content...",
+                    subtitle: "Fetching from Bluesky API",
                     date: date,
                     type: .bluesky,
-                    contentPreview: socialPreview,
-                    progressPercentage: Double.random(in: 0.25...0.75)
+                    contentPreview: "Content will be loaded from the Bluesky API.",
+                    progressPercentage: 0.0
                 )
             case .mastodon:
                 let socialPreview = "The post elaborates on recent developments in the tech industry and provides context around emerging trends. Several links to resources and further reading are included."

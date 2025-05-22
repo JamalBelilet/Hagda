@@ -54,10 +54,39 @@ class SocialDetailViewModel {
         // Set initial values from the content item
         self.postContent = item.title
         
-        // Extract handle from subtitle if available
-        if let atSymbolRange = item.subtitle.range(of: "@") {
-            self.authorHandle = String(item.subtitle[atSymbolRange.lowerBound...])
-                .components(separatedBy: " ").first ?? ""
+        // Extract metadata if available
+        if let metadata = item.metadata as? [String: Any] {
+            if item.type == .bluesky {
+                self.authorHandle = metadata["authorHandle"] as? String ?? ""
+                self.authorName = metadata["authorDisplayName"] as? String ?? ""
+                self.replyCount = metadata["replyCount"] as? Int ?? 0
+                self.repostCount = metadata["repostCount"] as? Int ?? 0
+                self.likeCount = metadata["likeCount"] as? Int ?? 0
+                
+                if let avatarUrl = metadata["authorAvatar"] as? String, !avatarUrl.isEmpty {
+                    self.authorAvatarURL = URL(string: avatarUrl)
+                }
+                
+                self.postContent = metadata["text"] as? String ?? item.title
+            } else if item.type == .mastodon {
+                self.authorHandle = metadata["accountAcct"] as? String ?? ""
+                self.authorName = metadata["accountDisplayName"] as? String ?? ""
+                self.replyCount = metadata["repliesCount"] as? Int ?? 0
+                self.repostCount = metadata["reblogsCount"] as? Int ?? 0
+                self.likeCount = metadata["favouritesCount"] as? Int ?? 0
+                
+                if let avatarUrl = metadata["accountAvatar"] as? String, !avatarUrl.isEmpty {
+                    self.authorAvatarURL = URL(string: avatarUrl)
+                }
+                
+                self.postContent = metadata["content"] as? String ?? item.title
+            }
+        } else {
+            // Fallback to parsing from subtitle
+            if let atSymbolRange = item.subtitle.range(of: "@") {
+                self.authorHandle = String(item.subtitle[atSymbolRange.lowerBound...])
+                    .components(separatedBy: " ").first ?? ""
+            }
         }
         
         // Format the date
@@ -77,9 +106,11 @@ class SocialDetailViewModel {
     
     /// Load additional details for a BlueSky post
     private func loadBlueSkyDetails() {
-        // Extract handle if available
-        guard let handle = extractHandle() else {
-            self.error = NSError(domain: "SocialDetailViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not determine BlueSky handle"])
+        // Extract URI from metadata for thread fetching
+        guard let metadata = item.metadata as? [String: Any],
+              let uri = metadata["uri"] as? String else {
+            // If no metadata, generate placeholder replies
+            generatePlaceholderReplies()
             return
         }
         
@@ -90,24 +121,20 @@ class SocialDetailViewModel {
                 // Get the BlueSky API service from App Model
                 let blueSkyService = AppModel.shared.getBlueSkyAPIService()
                 
-                // Fetch content for the source to get real data
-                if let source = createSourceFromHandle(handle) {
-                    let content = try await blueSkyService.fetchContentForSource(source)
-                    
-                    // Find the matching post by comparing titles
-                    if let matchingPost = content.first(where: { $0.title == self.item.title }) {
-                        await updateUIWithPost(matchingPost)
-                    } else if !content.isEmpty {
-                        // If no exact match, just use the first post
-                        await updateUIWithPost(content[0])
-                    }
-                }
+                // Fetch thread (post with replies)
+                let thread = try await blueSkyService.fetchPostThread(uri: uri, depth: 6)
                 
-                self.isLoading = false
+                // Convert replies to our Reply model
+                await MainActor.run {
+                    self.replies = self.convertBlueSkyReplies(from: thread.replies ?? [])
+                    self.isLoading = false
+                }
             } catch {
                 await MainActor.run {
                     self.error = error
                     self.isLoading = false
+                    // Show placeholder replies on error
+                    self.generatePlaceholderReplies()
                 }
             }
         }
@@ -246,17 +273,47 @@ class SocialDetailViewModel {
         return 0
     }
     
-    /// Generate placeholder replies until we implement real reply fetching
+    /// Generate placeholder replies for error states
     private func generatePlaceholderReplies() {
-        let replyCount = min(self.replyCount, 3) // Show up to 3 replies
-        
-        self.replies = (0..<replyCount).map { i in
+        self.replies = [
             Reply(
-                authorName: "User \(i+1)",
-                authorHandle: item.type == .bluesky ? "@user\(i+1).bsky.social" : "@user\(i+1)@mastodon.social",
+                authorName: "System",
+                authorHandle: "@system",
                 authorAvatarURL: nil,
-                content: i == 0 ? "Great insights! I'd love to hear more about your perspective on this." : "I've had a similar experience and completely agree with your points.",
-                timestamp: "\(Int.random(in: 1...12))h"
+                content: "Unable to load replies. Please check your connection and try again.",
+                timestamp: "now"
+            )
+        ]
+    }
+    
+    /// Convert BlueSky thread replies to our Reply model
+    private func convertBlueSkyReplies(from threads: [PostThread]) -> [Reply] {
+        return threads.compactMap { thread in
+            let post = thread.post
+            
+            // Format timestamp
+            let date: Date
+            if let postDate = ISO8601DateFormatter().date(from: post.record.createdAt) {
+                date = postDate
+            } else {
+                date = Date()
+            }
+            let formatter = RelativeDateTimeFormatter()
+            formatter.unitsStyle = .abbreviated
+            let timestamp = formatter.localizedString(for: date, relativeTo: Date())
+            
+            // Get avatar URL
+            var avatarURL: URL? = nil
+            if let avatar = post.author.avatar, !avatar.isEmpty {
+                avatarURL = URL(string: avatar)
+            }
+            
+            return Reply(
+                authorName: post.author.displayName ?? post.author.handle,
+                authorHandle: "@\(post.author.handle)",
+                authorAvatarURL: avatarURL,
+                content: post.record.text,
+                timestamp: timestamp
             )
         }
     }
