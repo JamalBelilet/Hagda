@@ -10,13 +10,14 @@ struct ContentItem: Identifiable, Equatable {
     let type: SourceType
     let contentPreview: String
     let progressPercentage: Double
+    let metadata: [String: Any]
     
     // Implement Equatable to allow comparison of ContentItems
     static func == (lhs: ContentItem, rhs: ContentItem) -> Bool {
         lhs.id == rhs.id
     }
     
-    init(id: UUID = UUID(), title: String, subtitle: String, date: Date, type: SourceType, contentPreview: String = "", progressPercentage: Double = 0.0) {
+    init(id: UUID = UUID(), title: String, subtitle: String, date: Date, type: SourceType, contentPreview: String = "", progressPercentage: Double = 0.0, metadata: [String: Any] = [:]) {
         self.id = id
         self.title = title
         self.subtitle = subtitle
@@ -24,6 +25,7 @@ struct ContentItem: Identifiable, Equatable {
         self.type = type
         self.contentPreview = contentPreview
         self.progressPercentage = progressPercentage
+        self.metadata = metadata
     }
 }
 
@@ -114,21 +116,14 @@ extension ContentItem {
             
             switch source.type {
             case .article:
-                let articlePreview = """
-                The article explores various approaches to solving common development challenges. Key concepts covered include:
-                
-                • Architectural patterns for scalable applications
-                • Performance optimizations for mobile interfaces
-                • Data synchronization strategies
-                • Best practices for cross-platform development
-                """
+                // Return loading state for articles since they're fetched from RSS
                 return ContentItem(
-                    title: "The Future of \(["AI", "Technology", "Mobile", "Programming", "Web Development"].randomElement()!): What's Next?",
-                    subtitle: "\(["Analysis", "Opinion", "Report", "Review"].randomElement()!) by \(["Sarah Johnson", "Mike Chen", "Aisha Patel", "David Kim"].randomElement()!)",
+                    title: "Loading articles...",
+                    subtitle: "Fetching latest news",
                     date: date,
                     type: .article,
-                    contentPreview: articlePreview,
-                    progressPercentage: Double.random(in: 0.25...0.75)
+                    contentPreview: "",
+                    progressPercentage: 0.0
                 )
             case .reddit:
                 let redditPreview = """
