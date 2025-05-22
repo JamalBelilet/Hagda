@@ -90,14 +90,59 @@ class PodcastDetailViewModel {
             do {
                 self.isLoading = true
                 
-                // For now, we'll just update the UI with the existing data
-                // In a real implementation, we would fetch additional metadata
-                // like artwork, full description, chapters, etc.
+                // Check if we have metadata from the feed
+                let metadata = item.metadata
                 
-                // Simulate a network delay for the demo
-                try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-                
-                await updateUIWithExistingData()
+                await MainActor.run {
+                    // Set episode information from metadata
+                    if let episodeTitle = metadata["episodeTitle"] as? String {
+                        self.title = episodeTitle
+                    }
+                    
+                    if let podcastName = metadata["podcastName"] as? String {
+                        self.podcastName = podcastName
+                    }
+                    
+                    if let author = metadata["episodeAuthor"] as? String, !author.isEmpty {
+                        self.authorName = author
+                    }
+                    
+                    if let formattedDuration = metadata["episodeFormattedDuration"] as? String {
+                        self.duration = formattedDuration
+                    }
+                    
+                    // Get full description from metadata
+                    if let fullDescription = metadata["episodeDescription"] as? String, !fullDescription.isEmpty {
+                        self.description = fullDescription
+                    } else if let summary = metadata["episodeSummary"] as? String, !summary.isEmpty {
+                        self.description = summary
+                    }
+                    
+                    // Set audio URL
+                    if let audioUrlString = metadata["audioUrl"] as? String,
+                       !audioUrlString.isEmpty {
+                        self.audioURL = URL(string: audioUrlString)
+                    }
+                    
+                    // Set artwork URL
+                    if let episodeImage = metadata["episodeImageUrl"] as? String,
+                       !episodeImage.isEmpty {
+                        self.artworkURL = URL(string: episodeImage)
+                        self.hasArtwork = true
+                    } else if let podcastArtwork = metadata["podcastArtworkUrl"] as? String,
+                              !podcastArtwork.isEmpty {
+                        self.artworkURL = URL(string: podcastArtwork)
+                        self.hasArtwork = true
+                    }
+                    
+                    // Parse duration to seconds if available
+                    if let durationStr = metadata["episodeDuration"] as? String {
+                        self.parseDurationToSeconds(durationStr)
+                    }
+                    
+                    // Generate show notes from the full description
+                    generateShowNotes()
+                }
                 
                 self.isLoading = false
             } catch {
@@ -207,5 +252,30 @@ class PodcastDetailViewModel {
         }
         
         return "The episode continues with additional insights and expert interviews."
+    }
+    
+    /// Parse duration string to seconds
+    private func parseDurationToSeconds(_ durationStr: String) {
+        // If it's just seconds as a string (e.g., "3600")
+        if let seconds = Int(durationStr) {
+            self.totalTime = seconds
+            self.currentTime = Int(Double(totalTime) * progressPercentage)
+            return
+        }
+        
+        // If it's in format HH:MM:SS
+        let components = durationStr.split(separator: ":").map { String($0) }
+        if components.count == 3 {
+            let hours = Int(components[0]) ?? 0
+            let minutes = Int(components[1]) ?? 0
+            let seconds = Int(components[2]) ?? 0
+            self.totalTime = hours * 3600 + minutes * 60 + seconds
+            self.currentTime = Int(Double(totalTime) * progressPercentage)
+        } else if components.count == 2 {
+            let minutes = Int(components[0]) ?? 0
+            let seconds = Int(components[1]) ?? 0
+            self.totalTime = minutes * 60 + seconds
+            self.currentTime = Int(Double(totalTime) * progressPercentage)
+        }
     }
 }

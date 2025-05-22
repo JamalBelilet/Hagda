@@ -10,13 +10,14 @@ struct ContentItem: Identifiable, Equatable {
     let type: SourceType
     let contentPreview: String
     let progressPercentage: Double
+    let metadata: [String: Any]
     
     // Implement Equatable to allow comparison of ContentItems
     static func == (lhs: ContentItem, rhs: ContentItem) -> Bool {
         lhs.id == rhs.id
     }
     
-    init(id: UUID = UUID(), title: String, subtitle: String, date: Date, type: SourceType, contentPreview: String = "", progressPercentage: Double = 0.0) {
+    init(id: UUID = UUID(), title: String, subtitle: String, date: Date, type: SourceType, contentPreview: String = "", progressPercentage: Double = 0.0, metadata: [String: Any] = [:]) {
         self.id = id
         self.title = title
         self.subtitle = subtitle
@@ -24,6 +25,7 @@ struct ContentItem: Identifiable, Equatable {
         self.type = type
         self.contentPreview = contentPreview
         self.progressPercentage = progressPercentage
+        self.metadata = metadata
     }
 }
 
@@ -165,21 +167,14 @@ extension ContentItem {
                     progressPercentage: Double.random(in: 0.25...0.75)
                 )
             case .podcast:
-                let podcastPreview = """
-                In the remainder of this episode:
-                
-                • Interview with a leading industry expert about emerging technologies
-                • Practical applications and implementation strategies
-                • Analysis of market trends and future predictions
-                • Q&A session addressing common developer questions
-                """
+                // Return loading state for Podcast episodes since they're fetched from RSS
                 return ContentItem(
-                    title: "Episode \(Int.random(in: 100...350)): \(["The State of Technology", "Interview with Industry Expert", "Deep Dive into New Frameworks", "Tech News Roundup"].randomElement()!)",
-                    subtitle: "\(Int.random(in: 30...120)) minutes • \(["Interview", "Solo Episode", "Panel Discussion", "Q&A Session"].randomElement()!)",
+                    title: "Loading podcast episodes...",
+                    subtitle: "Fetching latest episodes",
                     date: date,
                     type: .podcast,
-                    contentPreview: podcastPreview,
-                    progressPercentage: Double.random(in: 0.25...0.75)
+                    contentPreview: "",
+                    progressPercentage: 0.0
                 )
             }
         }

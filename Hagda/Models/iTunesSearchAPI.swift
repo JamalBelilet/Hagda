@@ -161,7 +161,25 @@ struct PodcastEpisode: Codable, Identifiable {
             date: publicationDate ?? Date(),
             type: .podcast,
             contentPreview: description.isEmpty ? summary ?? "" : description,
-            progressPercentage: 0.0
+            progressPercentage: 0.0,
+            metadata: [
+                "episodeGuid": guid,
+                "episodeTitle": title,
+                "episodeDescription": description,
+                "episodeSummary": summary ?? "",
+                "episodeDuration": duration ?? "",
+                "episodeFormattedDuration": formattedDuration,
+                "episodePubDate": pubDate,
+                "episodeLink": link ?? "",
+                "episodeAuthor": author ?? "",
+                "episodeImageUrl": image ?? "",
+                "audioUrl": audioUrl ?? "",
+                "audioType": enclosure?.type ?? "audio/mpeg",
+                "audioLength": enclosure?.length ?? "",
+                "podcastName": podcastSource.name,
+                "podcastArtworkUrl": podcastSource.artworkUrl ?? "",
+                "podcastFeedUrl": podcastSource.feedUrl ?? ""
+            ]
         )
     }
 }
@@ -340,7 +358,7 @@ class ITunesSearchService {
         
         // Stop here if no episodes were found
         if itemMatches.isEmpty {
-            return generateSampleEpisodes(for: source)
+            return []
         }
         
         // Parse each episode
@@ -436,12 +454,12 @@ class ITunesSearchService {
             episodes.append(episode)
         }
         
-        // If no episodes were successfully parsed, return sample data
+        // If no episodes were successfully parsed, return empty array
         if episodes.isEmpty {
             #if DEBUG
-            print("No episodes parsed successfully, using sample data")
+            print("No episodes parsed successfully")
             #endif
-            return generateSampleEpisodes(for: source)
+            return []
         }
         
         // Convert PodcastEpisode objects to ContentItem objects
@@ -456,45 +474,4 @@ class ITunesSearchService {
         return episodes.map { $0.toContentItem(podcastSource: source) }
     }
     
-    /// Generate sample podcast episodes for a source (temporary implementation)
-    /// - Parameter source: The podcast source
-    /// - Returns: Array of ContentItems representing sample episodes
-    private func generateSampleEpisodes(for source: Source) -> [ContentItem] {
-        let calendar = Calendar.current
-        let today = Date()
-        
-        return (1...15).map { index in
-            let daysAgo = Double(index * 7) // Weekly episodes
-            let date = calendar.date(byAdding: .day, value: -Int(daysAgo), to: today) ?? today
-            
-            let titles = ["Exploring New Technologies", 
-                        "Interview with Industry Expert",
-                        "Deep Dive into Development",
-                        "The Future of Computing",
-                        "Beginner's Guide to Programming"]
-            let episodeTitle = "Episode \(100 - index): \(titles.randomElement() ?? "")"
-            
-            let duration = "\(Int.random(in: 25...75)) minutes"
-            
-            let description = """
-            In this episode:
-            
-            • Discussion of latest trends in technology
-            • Interview with special guest
-            • Q&A session with listeners
-            • Future predictions and insights
-            
-            Join us for an in-depth conversation about technology and development.
-            """
-            
-            return ContentItem(
-                title: episodeTitle,
-                subtitle: duration,
-                date: date,
-                type: .podcast,
-                contentPreview: description,
-                progressPercentage: Double.random(in: 0.0...0.3) // Some episodes may be partially played
-            )
-        }
-    }
 }
