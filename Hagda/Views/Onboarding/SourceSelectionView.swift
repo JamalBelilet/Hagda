@@ -5,6 +5,7 @@ struct SourceSelectionView: View {
     // MARK: - Properties
     
     @ObservedObject var coordinator: OnboardingCoordinator
+    @State private var searchDebounceTimer: Timer?
     
     // MARK: - Body
     
@@ -112,9 +113,33 @@ struct SourceSelectionView: View {
         .autocorrectionDisabled()
         .onSubmit(of: .search, coordinator.searchSources)
         #endif
+        .onChange(of: coordinator.searchText) { _, newValue in
+            // Cancel any existing timer
+            searchDebounceTimer?.invalidate()
+            
+            // Clear results if search text is empty
+            if newValue.isEmpty {
+                coordinator.searchResults = []
+                coordinator.errorMessage = nil
+            } else {
+                // Set up a new timer to search after a short delay
+                searchDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
+                    coordinator.searchSources()
+                }
+            }
+        }
         .onChange(of: coordinator.selectedSourceType) { _, _ in
-            // Update search placeholder when type changes
-            coordinator.searchText = ""
+            // Store the current search text before clearing
+            let currentSearchText = coordinator.searchText
+            
+            // Clear results and error when type changes
+            coordinator.searchResults = []
+            coordinator.errorMessage = nil
+            
+            // If there was a search query, perform the search again for the new type
+            if !currentSearchText.isEmpty {
+                coordinator.searchSources()
+            }
         }
         .accessibilityIdentifier("sourceSelectionScreen")
             
