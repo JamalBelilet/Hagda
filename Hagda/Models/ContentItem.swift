@@ -10,7 +10,7 @@ struct ContentItem: Identifiable, Equatable {
     let type: SourceType
     let contentPreview: String
     let progressPercentage: Double
-    let metadata: [String: Any]
+    let metadata: [String: Any]  // Store platform-specific data
     
     // Implement Equatable to allow comparison of ContentItems
     static func == (lhs: ContentItem, rhs: ContentItem) -> Bool {
@@ -133,38 +133,34 @@ extension ContentItem {
                     progressPercentage: Double.random(in: 0.25...0.75)
                 )
             case .reddit:
-                let redditPreview = """
-                This post continues with a detailed explanation of the implementation process and challenges faced. The community has responded with several useful suggestions and alternative approaches.
-                
-                Several code examples are provided to demonstrate the solution in action.
-                """
+                // Return empty item - real data should come from Reddit API
                 return ContentItem(
-                    title: "\(["Anyone else experiencing this issue with...", "Just discovered this amazing...", "What's your opinion on...", "Help needed with..."].randomElement()!)",
-                    subtitle: "Posted by u/\(["tech_enthusiast", "code_master", "curious_dev", "web_wizard"].randomElement()!) • \(Int.random(in: 5...500)) comments",
+                    title: "Loading Reddit content...",
+                    subtitle: "Fetching from Reddit API",
                     date: date,
                     type: .reddit,
-                    contentPreview: redditPreview,
-                    progressPercentage: Double.random(in: 0.25...0.75)
+                    contentPreview: "Content will be loaded from the Reddit API.",
+                    progressPercentage: 0.0
                 )
             case .bluesky:
-                let socialPreview = "The thread continues with additional insights about the latest technology trends and practical advice for implementation. There's a discussion about potential use cases and limitations."
+                // Return empty item - real data should come from Bluesky API
                 return ContentItem(
-                    title: "\(["Just shipped a new feature for...", "Thoughts on the latest tech trends...", "Working on something exciting...", "Anyone going to the tech conference?"].randomElement()!)",
-                    subtitle: "@\(["skypro", "techblogger", "devguru", "codemaster"].randomElement()!).bsky.social",
+                    title: "Loading Bluesky content...",
+                    subtitle: "Fetching from Bluesky API",
                     date: date,
                     type: .bluesky,
-                    contentPreview: socialPreview,
-                    progressPercentage: Double.random(in: 0.25...0.75)
+                    contentPreview: "Content will be loaded from the Bluesky API.",
+                    progressPercentage: 0.0
                 )
             case .mastodon:
-                let socialPreview = "The post elaborates on recent developments in the tech industry and provides context around emerging trends. Several links to resources and further reading are included."
+                // Return loading state for Mastodon posts since they're fetched from API
                 return ContentItem(
-                    title: "\(["Just published my thoughts on...", "Here's my latest project update...", "Interesting development in tech today...", "Anyone else notice this trend?"].randomElement()!)",
-                    subtitle: "@\(["techwriter", "opensourcefan", "devrelexpert", "codeartist"].randomElement()!)@mastodon.social",
+                    title: "Loading Mastodon posts...",
+                    subtitle: "Fetching latest updates",
                     date: date,
                     type: .mastodon,
-                    contentPreview: socialPreview,
-                    progressPercentage: Double.random(in: 0.25...0.75)
+                    contentPreview: "",
+                    progressPercentage: 0.0
                 )
             case .podcast:
                 // Return loading state for Podcast episodes since they're fetched from RSS

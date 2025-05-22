@@ -158,10 +158,7 @@ extension Source {
             Source(name: "r/cybersecurity", type: .reddit, description: "Security news, threats, best practices, and career advice from industry professionals.", handle: "r/cybersecurity"),
             Source(name: "r/pcgaming", type: .reddit, description: "PC gaming discussions, hardware recommendations, and performance optimization tips.", handle: "r/pcgaming"),
             
-            // Bluesky
-            Source(name: "Aleyda Solis", type: .bluesky, description: "SEO expert sharing industry insights, digital marketing trends, and tech developments.", handle: "aleyda.solis.bsky.social"),
-            Source(name: "Glenn Gabe", type: .bluesky, description: "SEO consultant analyzing Google updates, sharing technical guides and industry research.", handle: "glenngabe.bsky.social"),
-            Source(name: "Crystal Crowder", type: .bluesky, description: "Tech writer covering device tips, emerging trends, and practical digital solutions.", handle: "crystalcrowder.bsky.social"),
+            // Bluesky - removed hardcoded sources, users will search and add their own
             
             // Mastodon
             Source(name: "Eugen Rochko", type: .mastodon, description: "Founder and CEO of Mastodon sharing platform updates and decentralized web insights.", handle: "@Gargron@mastodon.social"),
