@@ -304,10 +304,8 @@ class AppModel {
             // Bluesky sources are now handled asynchronously via BlueSkyAPIService
             return []
         case .mastodon:
-            return [
-                Source(name: "Open Source News", type: .mastodon, description: "Updates from the open source community.", handle: "@opensource@mastodon.social"),
-                Source(name: "Tech Policy", type: .mastodon, description: "Analysis of tech policy and regulations.", handle: "@techpolicy@mastodon.social")
-            ]
+            // Mastodon sources are now handled asynchronously via MastodonAPIService
+            return []
         case .reddit, .podcast:
             // This should never be reached as we handle these cases above
             return []

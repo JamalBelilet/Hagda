@@ -142,12 +142,6 @@ class SocialDetailViewModel {
     
     /// Load additional details for a Mastodon post
     private func loadMastodonDetails() {
-        // Extract handle if available
-        guard let handle = extractHandle() else {
-            self.error = NSError(domain: "SocialDetailViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not determine Mastodon handle"])
-            return
-        }
-        
         Task {
             do {
                 self.isLoading = true
@@ -155,16 +149,82 @@ class SocialDetailViewModel {
                 // Get the Mastodon API service from App Model
                 let mastodonService = AppModel.shared.getMastodonAPIService()
                 
-                // Fetch content for the source to get real data
-                if let source = createSourceFromHandle(handle) {
-                    let content = try await mastodonService.fetchContentForSource(source)
+                // Check if we have metadata with status ID
+                let metadata = item.metadata
+                if let statusId = metadata["statusId"] as? String {
                     
-                    // Find the matching post by comparing titles
-                    if let matchingPost = content.first(where: { $0.title == self.item.title }) {
-                        await updateUIWithPost(matchingPost)
-                    } else if !content.isEmpty {
-                        // If no exact match, just use the first post
-                        await updateUIWithPost(content[0])
+                    // Fetch the thread context using the status ID
+                    let context = try await mastodonService.fetchThreadContext(statusID: statusId)
+                    
+                    // Update UI with the actual data from metadata
+                    await MainActor.run {
+                        // Set author information from metadata
+                        if let displayName = metadata["accountDisplayName"] as? String {
+                            self.authorName = displayName
+                        }
+                        if let handle = metadata["accountHandle"] as? String {
+                            self.authorHandle = "@\(handle)"
+                        }
+                        if let avatarUrl = metadata["accountAvatar"] as? String,
+                           !avatarUrl.isEmpty {
+                            self.authorAvatarURL = URL(string: avatarUrl)
+                        }
+                        
+                        // Set interaction counts from metadata
+                        if let replies = metadata["repliesCount"] as? Int {
+                            self.replyCount = replies
+                        }
+                        if let boosts = metadata["reblogsCount"] as? Int {
+                            self.repostCount = boosts
+                        }
+                        if let favorites = metadata["favouritesCount"] as? Int {
+                            self.likeCount = favorites
+                        }
+                        
+                        // Process raw content if available
+                        if let rawContent = metadata["rawContent"] as? String {
+                            self.postContent = rawContent.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                                .trimmingCharacters(in: .whitespacesAndNewlines)
+                        }
+                        
+                        // Convert Mastodon statuses from context.descendants to replies
+                        self.replies = context.descendants.prefix(10).map { status in
+                            Reply(
+                                authorName: status.account.display_name.isEmpty ? status.account.username : status.account.display_name,
+                                authorHandle: "@\(status.account.acct)",
+                                authorAvatarURL: status.account.avatar.flatMap { URL(string: $0) },
+                                content: status.content.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                                    .trimmingCharacters(in: .whitespacesAndNewlines),
+                                timestamp: formatRelativeTime(from: status.parsedCreatedAt)
+                            )
+                        }
+                        
+                        // Check for media attachments
+                        if let mediaAttachments = metadata["mediaAttachments"] as? [[String: Any]],
+                           let firstImage = mediaAttachments.first(where: { ($0["type"] as? String) == "image" }),
+                           let imageUrlString = firstImage["url"] as? String {
+                            self.hasImage = true
+                            self.imageURL = URL(string: imageUrlString)
+                        }
+                    }
+                } else {
+                    // Fallback: try to extract handle and fetch content
+                    guard let handle = extractHandle() else {
+                        self.error = NSError(domain: "SocialDetailViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not determine Mastodon handle"])
+                        return
+                    }
+                    
+                    // Fetch content for the source to get real data
+                    if let source = createSourceFromHandle(handle) {
+                        let content = try await mastodonService.fetchContentForSource(source)
+                        
+                        // Find the matching post by comparing titles
+                        if let matchingPost = content.first(where: { $0.title == self.item.title }) {
+                            await updateUIWithPost(matchingPost)
+                        } else if !content.isEmpty {
+                            // If no exact match, just use the first post
+                            await updateUIWithPost(content[0])
+                        }
                     }
                 }
                 
@@ -284,6 +344,13 @@ class SocialDetailViewModel {
                 timestamp: "now"
             )
         ]
+    }
+    
+    /// Format a date into relative time string
+    private func formatRelativeTime(from date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: date, relativeTo: Date())
     }
     
     /// Convert BlueSky thread replies to our Reply model
