@@ -163,21 +163,14 @@ extension ContentItem {
                     progressPercentage: 0.0
                 )
             case .podcast:
-                let podcastPreview = """
-                In the remainder of this episode:
-                
-                • Interview with a leading industry expert about emerging technologies
-                • Practical applications and implementation strategies
-                • Analysis of market trends and future predictions
-                • Q&A session addressing common developer questions
-                """
+                // Return loading state for Podcast episodes since they're fetched from RSS
                 return ContentItem(
-                    title: "Episode \(Int.random(in: 100...350)): \(["The State of Technology", "Interview with Industry Expert", "Deep Dive into New Frameworks", "Tech News Roundup"].randomElement()!)",
-                    subtitle: "\(Int.random(in: 30...120)) minutes • \(["Interview", "Solo Episode", "Panel Discussion", "Q&A Session"].randomElement()!)",
+                    title: "Loading podcast episodes...",
+                    subtitle: "Fetching latest episodes",
                     date: date,
                     type: .podcast,
-                    contentPreview: podcastPreview,
-                    progressPercentage: Double.random(in: 0.25...0.75)
+                    contentPreview: "",
+                    progressPercentage: 0.0
                 )
             }
         }
