@@ -161,7 +161,20 @@ struct BlueSkyPost: Codable {
             date: parsedCreatedAt,
             type: .bluesky,
             contentPreview: record.text,
-            progressPercentage: 0.0
+            progressPercentage: 0.0,
+            metadata: [
+                "uri": uri,
+                "cid": cid,
+                "authorDid": author.did,
+                "authorHandle": author.handle,
+                "authorDisplayName": author.displayName ?? author.handle,
+                "authorAvatar": author.avatar ?? "",
+                "replyCount": replyCount ?? 0,
+                "repostCount": repostCount ?? 0,
+                "likeCount": likeCount ?? 0,
+                "indexedAt": indexedAt,
+                "text": record.text
+            ]
         )
     }
 }
@@ -642,4 +655,45 @@ class BlueSkyAPIService {
         
         throw URLError(.badURL)
     }
+    
+    /// Fetch thread (replies) for a specific post
+    /// - Parameters:
+    ///   - uri: The AT URI of the post
+    ///   - depth: How deep to fetch replies (default: 6)
+    /// - Returns: Thread structure with post and replies
+    func fetchPostThread(uri: String, depth: Int = 6) async throws -> PostThread {
+        // Construct URL for thread endpoint
+        var components = URLComponents(string: "\(baseURL)/app.bsky.feed.getPostThread")
+        components?.queryItems = [
+            URLQueryItem(name: "uri", value: uri),
+            URLQueryItem(name: "depth", value: "\(depth)")
+        ]
+        
+        guard let url = components?.url else {
+            throw URLError(.badURL)
+        }
+        
+        // Create request
+        var request = URLRequest(url: url)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Hagda/1.0", forHTTPHeaderField: "User-Agent")
+        
+        // Execute request
+        let (data, _) = try await session.data(for: request)
+        
+        // Parse response
+        let response = try JSONDecoder().decode(PostThreadResponse.self, from: data)
+        return response.thread
+    }
+}
+
+// MARK: - Thread Response Models
+
+struct PostThreadResponse: Codable {
+    let thread: PostThread
+}
+
+struct PostThread: Codable {
+    let post: BlueSkyPost
+    let replies: [PostThread]?
 }

@@ -10,13 +10,14 @@ struct ContentItem: Identifiable, Equatable {
     let type: SourceType
     let contentPreview: String
     let progressPercentage: Double
+    let metadata: [String: Any]  // Store platform-specific data
     
     // Implement Equatable to allow comparison of ContentItems
     static func == (lhs: ContentItem, rhs: ContentItem) -> Bool {
         lhs.id == rhs.id
     }
     
-    init(id: UUID = UUID(), title: String, subtitle: String, date: Date, type: SourceType, contentPreview: String = "", progressPercentage: Double = 0.0) {
+    init(id: UUID = UUID(), title: String, subtitle: String, date: Date, type: SourceType, contentPreview: String = "", progressPercentage: Double = 0.0, metadata: [String: Any] = [:]) {
         self.id = id
         self.title = title
         self.subtitle = subtitle
@@ -24,6 +25,7 @@ struct ContentItem: Identifiable, Equatable {
         self.type = type
         self.contentPreview = contentPreview
         self.progressPercentage = progressPercentage
+        self.metadata = metadata
     }
 }
 
@@ -137,22 +139,22 @@ extension ContentItem {
                 Several code examples are provided to demonstrate the solution in action.
                 """
                 return ContentItem(
-                    title: "\(["Anyone else experiencing this issue with...", "Just discovered this amazing...", "What's your opinion on...", "Help needed with..."].randomElement()!)",
-                    subtitle: "Posted by u/\(["tech_enthusiast", "code_master", "curious_dev", "web_wizard"].randomElement()!) • \(Int.random(in: 5...500)) comments",
+                    title: "Loading Reddit content...",
+                    subtitle: "Fetching from Reddit API",
                     date: date,
                     type: .reddit,
-                    contentPreview: redditPreview,
-                    progressPercentage: Double.random(in: 0.25...0.75)
+                    contentPreview: "Content will be loaded from the Reddit API.",
+                    progressPercentage: 0.0
                 )
             case .bluesky:
-                let socialPreview = "The thread continues with additional insights about the latest technology trends and practical advice for implementation. There's a discussion about potential use cases and limitations."
+                // Return empty item - real data should come from Bluesky API
                 return ContentItem(
-                    title: "\(["Just shipped a new feature for...", "Thoughts on the latest tech trends...", "Working on something exciting...", "Anyone going to the tech conference?"].randomElement()!)",
-                    subtitle: "@\(["skypro", "techblogger", "devguru", "codemaster"].randomElement()!).bsky.social",
+                    title: "Loading Bluesky content...",
+                    subtitle: "Fetching from Bluesky API",
                     date: date,
                     type: .bluesky,
-                    contentPreview: socialPreview,
-                    progressPercentage: Double.random(in: 0.25...0.75)
+                    contentPreview: "Content will be loaded from the Bluesky API.",
+                    progressPercentage: 0.0
                 )
             case .mastodon:
                 let socialPreview = "The post elaborates on recent developments in the tech industry and provides context around emerging trends. Several links to resources and further reading are included."

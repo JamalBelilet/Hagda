@@ -301,10 +301,8 @@ class AppModel {
             // News sources are now handled asynchronously via NewsAPIService
             return []
         case .bluesky:
-            return [
-                Source(name: "Tech Insider", type: .bluesky, description: "Breaking tech news and insider perspectives.", handle: "techinsider.bsky.social"),
-                Source(name: "Dev Journal", type: .bluesky, description: "A developer's journey in tech.", handle: "devjournal.bsky.social")
-            ]
+            // Bluesky sources are now handled asynchronously via BlueSkyAPIService
+            return []
         case .mastodon:
             return [
                 Source(name: "Open Source News", type: .mastodon, description: "Updates from the open source community.", handle: "@opensource@mastodon.social"),
@@ -513,14 +511,8 @@ class AppModel {
         } catch {
             print("Error fetching Bluesky content: \(error.localizedDescription)")
             
-            // If we're in DEBUG mode, return some sample content for testing
-            #if DEBUG
-            print("Returning sample content for Bluesky in DEBUG mode")
-            return ContentItem.samplesForSource(blueSkySource)
-            #else
-            // In production, rethrow the error
+            // Always rethrow the error - no fallback to sample data
             throw error
-            #endif
         }
     }
     
