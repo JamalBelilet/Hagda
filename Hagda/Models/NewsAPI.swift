@@ -1,5 +1,44 @@
 import Foundation
 
+/// Model for a news article from RSS feed
+struct NewsArticle {
+    let guid: String
+    let title: String
+    let description: String
+    let link: String
+    let pubDate: Date
+    let author: String?
+    let category: String?
+    let imageUrl: String?
+    let content: String?
+    
+    /// Convert to ContentItem with metadata
+    func toContentItem(newsSource: Source) -> ContentItem {
+        ContentItem(
+            title: title,
+            subtitle: author != nil ? "By \(author!)" : "From \(newsSource.name)",
+            date: pubDate,
+            type: .article,
+            contentPreview: description,
+            progressPercentage: 0.0,
+            metadata: [
+                "articleGuid": guid,
+                "articleTitle": title,
+                "articleDescription": description,
+                "articleLink": link,
+                "articlePubDate": ISO8601DateFormatter().string(from: pubDate),
+                "articleAuthor": author ?? "",
+                "articleCategory": category ?? "",
+                "articleImageUrl": imageUrl ?? "",
+                "articleContent": content ?? description,
+                "sourceName": newsSource.name,
+                "sourceDescription": newsSource.description,
+                "sourceFeedUrl": newsSource.feedUrl ?? ""
+            ]
+        )
+    }
+}
+
 /// Models and services for RSS feed parsing and news source management
 class NewsAPIService {
     private let session: URLSessionProtocol
@@ -72,16 +111,20 @@ class NewsAPIService {
                 #endif
             }
             
-            // Convert to ContentItems and limit the count
+            // Convert to NewsArticle and then ContentItems with metadata
             return items.prefix(limit).map { newsItem in
-                return ContentItem(
+                let article = NewsArticle(
+                    guid: newsItem.link,
                     title: newsItem.title,
-                    subtitle: newsItem.author != nil ? "By \(newsItem.author!)" : "From \(source.name)",
-                    date: newsItem.pubDate,
-                    type: .article,
-                    contentPreview: newsItem.description,
-                    progressPercentage: 0.0
+                    description: newsItem.description,
+                    link: newsItem.link,
+                    pubDate: newsItem.pubDate,
+                    author: newsItem.author,
+                    category: nil,
+                    imageUrl: newsItem.imageUrl,
+                    content: newsItem.description
                 )
+                return article.toContentItem(newsSource: source)
             }
         } catch {
             #if DEBUG
@@ -95,32 +138,8 @@ class NewsAPIService {
     
     /// Generate sample articles for testing and fallback
     private func generateSampleArticles(for source: Source, count: Int) -> [ContentItem] {
-        let calendar = Calendar.current
-        let today = Date()
-        
-        return (0..<count).map { index in
-            let daysAgo = Double(index * 2) // Articles every 2 days
-            let date = calendar.date(byAdding: .day, value: -Int(daysAgo), to: today) ?? today
-            
-            let titles = [
-                "Latest Updates from \(source.name)",
-                "Breaking News: Technology Advances",
-                "Innovative Solutions for Modern Problems",
-                "Industry Leaders Share Insights",
-                "The Future of Digital Media"
-            ]
-            
-            let articleTitle = titles[index % titles.count]
-            
-            return ContentItem(
-                title: articleTitle,
-                subtitle: "From \(source.name)",
-                date: date,
-                type: .article,
-                contentPreview: "This is a sample article generated for testing purposes. It simulates content that would normally be fetched from the RSS feed of \(source.name).",
-                progressPercentage: 0.0
-            )
-        }
+        // Return empty array instead of dummy data
+        return []
     }
     
     /// Add a custom news source with RSS feed URL

@@ -116,21 +116,14 @@ extension ContentItem {
             
             switch source.type {
             case .article:
-                let articlePreview = """
-                The article explores various approaches to solving common development challenges. Key concepts covered include:
-                
-                • Architectural patterns for scalable applications
-                • Performance optimizations for mobile interfaces
-                • Data synchronization strategies
-                • Best practices for cross-platform development
-                """
+                // Return loading state for articles since they're fetched from RSS
                 return ContentItem(
-                    title: "The Future of \(["AI", "Technology", "Mobile", "Programming", "Web Development"].randomElement()!): What's Next?",
-                    subtitle: "\(["Analysis", "Opinion", "Report", "Review"].randomElement()!) by \(["Sarah Johnson", "Mike Chen", "Aisha Patel", "David Kim"].randomElement()!)",
+                    title: "Loading articles...",
+                    subtitle: "Fetching latest news",
                     date: date,
                     type: .article,
-                    contentPreview: articlePreview,
-                    progressPercentage: Double.random(in: 0.25...0.75)
+                    contentPreview: "",
+                    progressPercentage: 0.0
                 )
             case .reddit:
                 // Return empty item - real data should come from Reddit API

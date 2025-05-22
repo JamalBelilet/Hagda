@@ -85,43 +85,53 @@ class ArticleDetailViewModel {
     
     /// Load additional details for an article
     private func loadArticleDetails() {
-        // Extract source information
-        guard !sourceName.isEmpty else {
-            self.error = NSError(domain: "ArticleDetailViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not determine article source"])
-            return
-        }
-        
         Task {
             do {
                 self.isLoading = true
                 
-                // Get the News API service from App Model
-                let newsService = AppModel.shared.getNewsAPIService()
+                // Check if we have metadata from the RSS feed
+                let metadata = item.metadata
                 
-                // Create a source from the article info
-                let source = Source(
-                    name: sourceName,
-                    type: .article,
-                    description: "News source",
-                    handle: nil,
-                    artworkUrl: nil,
-                    feedUrl: nil
-                )
-                
-                // Try to fetch the full article content if available
-                do {
-                    let articles = try await newsService.fetchArticles(for: source)
-                    
-                    // Find the matching article by title
-                    if let matchingArticle = articles.first(where: { $0.title == self.item.title }) {
-                        await updateUIWithArticle(matchingArticle)
-                    } else if !articles.isEmpty {
-                        // If no exact match, just use the first article
-                        await updateUIWithArticle(articles[0])
+                await MainActor.run {
+                    // Set article information from metadata
+                    if let articleTitle = metadata["articleTitle"] as? String {
+                        self.title = articleTitle
                     }
-                } catch {
-                    // Just use the existing content item if we can't fetch more details
-                    await updateUIWithArticle(item)
+                    
+                    if let sourceName = metadata["sourceName"] as? String {
+                        self.sourceName = sourceName
+                    }
+                    
+                    if let author = metadata["articleAuthor"] as? String, !author.isEmpty {
+                        self.authorName = author
+                    }
+                    
+                    // Get full content from metadata
+                    if let fullContent = metadata["articleContent"] as? String, !fullContent.isEmpty {
+                        self.fullContent = fullContent
+                        self.summary = fullContent
+                    } else if let description = metadata["articleDescription"] as? String, !description.isEmpty {
+                        self.fullContent = description
+                        self.summary = description
+                    }
+                    
+                    // Set article URL
+                    if let articleLink = metadata["articleLink"] as? String,
+                       !articleLink.isEmpty {
+                        self.articleURL = URL(string: articleLink)
+                    }
+                    
+                    // Set image URL
+                    if let imageUrlString = metadata["articleImageUrl"] as? String,
+                       !imageUrlString.isEmpty {
+                        self.imageURL = URL(string: imageUrlString)
+                        self.hasImage = true
+                    }
+                    
+                    // Recalculate reading time based on full content
+                    let wordCount = fullContent.split(separator: " ").count
+                    self.estimatedReadingTime = max(1, wordCount / 200)
+                    self.remainingReadingTime = Int(ceil(Double(estimatedReadingTime) * (1 - progressPercentage)))
                 }
                 
                 self.isLoading = false
