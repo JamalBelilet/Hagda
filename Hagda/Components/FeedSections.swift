@@ -586,38 +586,8 @@ extension ContinueItemsView {
             progressPercentage: 0.28
         ))
         
-        // Reddit items
-        allItems.append(ContentItem(
-            title: "The IT-Security Convergence: Why Your Organization Needs It",
-            subtitle: "r/cybersecurity • 15 min read",
-            date: calendar.date(byAdding: .hour, value: -6, to: now) ?? now,
-            type: .reddit,
-            contentPreview: """
-            The discussion continues with practical insights:
-            
-            • Case studies of organizations that successfully merged IT and security teams
-            • Key challenges in organizational structure and how to overcome them
-            • Training programs to build cross-functional expertise in both domains
-            • Metrics that show improved security posture after convergence
-            """,
-            progressPercentage: 0.42
-        ))
-        
-        allItems.append(ContentItem(
-            title: "I built a low-code tool that automates API testing - looking for feedback",
-            subtitle: "r/programming • 8 min read",
-            date: calendar.date(byAdding: .hour, value: -24, to: now) ?? now,
-            type: .reddit,
-            contentPreview: """
-            The post continues with the implementation details:
-            
-            • Technical architecture using Node.js and WebSockets
-            • Frontend implementation with React and state management
-            • Automated test generation from OpenAPI specifications
-            • Performance benchmarks and scalability considerations
-            """,
-            progressPercentage: 0.51
-        ))
+        // Reddit items - temporarily removed until we integrate real data
+        // TODO: Fetch from user's reading history
         
         // Shuffle all items and return 4-6 items to ensure we have enough to show the "See All" button
         return Array(allItems.shuffled().prefix(Int.random(in: 4...6)))
@@ -823,21 +793,8 @@ struct TopContentView: View {
             ))
         }
         
-        if availableTypes.contains(.reddit) {
-            topItems.append(ContentItem(
-                title: "The convergence of IT and security: Why these teams need to merge in 2024",
-                subtitle: "r/cybersecurity • 3.2k upvotes",
-                date: calendar.date(byAdding: .hour, value: -5, to: now) ?? now,
-                type: .reddit
-            ))
-            
-            topItems.append(ContentItem(
-                title: "Analysis: Satellite connectivity is finally becoming mainstream for smartphones",
-                subtitle: "r/Futurology • 5.6k upvotes",
-                date: calendar.date(byAdding: .hour, value: -7, to: now) ?? now,
-                type: .reddit
-            ))
-        }
+        // Reddit top items - temporarily removed until we integrate real trending data
+        // TODO: Fetch trending Reddit posts from selected subreddits
         
         if availableTypes.contains(.bluesky) {
             topItems.append(ContentItem(
