@@ -13,6 +13,33 @@ struct PodcastDetailView: View {
         self._viewModel = State(initialValue: PodcastDetailViewModel(item: item))
     }
     
+    // Computed properties for syncing with player
+    private var actualCurrentTime: Int {
+        if isCurrentEpisode {
+            return Int(playerManager.currentTime)
+        } else {
+            return viewModel.currentTime
+        }
+    }
+    
+    private var actualTotalTime: Int {
+        if isCurrentEpisode && playerManager.duration > 0 {
+            return Int(playerManager.duration)
+        } else {
+            return viewModel.totalTime
+        }
+    }
+    
+    private var actualProgress: Double {
+        if isCurrentEpisode && playerManager.duration > 0 {
+            return playerManager.currentTime / playerManager.duration
+        } else if viewModel.totalTime > 0 {
+            return Double(viewModel.currentTime) / Double(viewModel.totalTime)
+        } else {
+            return 0
+        }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Episode artwork
@@ -30,7 +57,7 @@ struct PodcastDetailView: View {
                     artworkPlaceholder
                 }
                 
-                Text(viewModel.duration)
+                Text(viewModel.formatTime(seconds: actualTotalTime))
                     .font(.caption)
                     .padding(8)
                     #if os(iOS) || os(visionOS)
@@ -87,7 +114,7 @@ struct PodcastDetailView: View {
                         
                         Rectangle()
                             .fill(Color.accentColor)
-                            .frame(width: geometry.size.width * CGFloat(viewModel.progressPercentage), height: 4)
+                            .frame(width: geometry.size.width * CGFloat(actualProgress), height: 4)
                             .cornerRadius(2)
                         
                         Circle()
@@ -98,13 +125,19 @@ struct PodcastDetailView: View {
                                 Circle()
                                     .stroke(Color.accentColor, lineWidth: 2)
                             )
-                            .offset(x: geometry.size.width * CGFloat(viewModel.progressPercentage) - 7)
+                            .offset(x: geometry.size.width * CGFloat(actualProgress) - 7)
                             .gesture(
                                 DragGesture()
                                     .onChanged { value in
-                                        let percentage = value.location.x / geometry.size.width
-                                        viewModel.progressPercentage = min(1.0, max(0.0, Double(percentage)))
-                                        viewModel.currentTime = Int(Double(viewModel.totalTime) * viewModel.progressPercentage)
+                                        if isCurrentEpisode {
+                                            let percentage = value.location.x / geometry.size.width
+                                            let newTime = Double(actualTotalTime) * min(1.0, max(0.0, Double(percentage)))
+                                            playerManager.seek(to: newTime)
+                                        } else {
+                                            let percentage = value.location.x / geometry.size.width
+                                            viewModel.progressPercentage = min(1.0, max(0.0, Double(percentage)))
+                                            viewModel.currentTime = Int(Double(viewModel.totalTime) * viewModel.progressPercentage)
+                                        }
                                     }
                             )
                     }
@@ -113,13 +146,13 @@ struct PodcastDetailView: View {
                 
                 // Time indicators
                 HStack {
-                    Text(viewModel.formatTime(seconds: viewModel.currentTime))
+                    Text(viewModel.formatTime(seconds: actualCurrentTime))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     
                     Spacer()
                     
-                    Text("-\(viewModel.formatTime(seconds: viewModel.totalTime - viewModel.currentTime))")
+                    Text("-\(viewModel.formatTime(seconds: max(0, actualTotalTime - actualCurrentTime)))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -215,7 +248,7 @@ struct PodcastDetailView: View {
                 .lineSpacing(5)
             
             // What's coming up next section
-            if viewModel.progressPercentage > 0 {
+            if actualProgress > 0 {
                 comingUpNextSection
             }
             
@@ -285,7 +318,7 @@ struct PodcastDetailView: View {
                 
                 Spacer()
                 
-                Text(viewModel.formatTime(seconds: viewModel.totalTime - viewModel.currentTime) + " remaining")
+                Text(viewModel.formatTime(seconds: max(0, actualTotalTime - actualCurrentTime)) + " remaining")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

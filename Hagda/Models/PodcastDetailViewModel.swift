@@ -234,11 +234,17 @@ class PodcastDetailViewModel {
         progressPercentage = min(1.0, max(0.0, Double(currentTime) / Double(totalTime)))
     }
     
-    /// Format a time in seconds to a string (MM:SS)
+    /// Format a time in seconds to a string (MM:SS or HH:MM:SS)
     func formatTime(seconds: Int) -> String {
-        let minutes = seconds / 60
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
         let remainingSeconds = seconds % 60
-        return String(format: "%d:%02d", minutes, remainingSeconds)
+        
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, remainingSeconds)
+        } else {
+            return String(format: "%d:%02d", minutes, remainingSeconds)
+        }
     }
     
     /// Get a summary of the remaining content
