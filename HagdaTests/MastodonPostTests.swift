@@ -4,32 +4,10 @@ import XCTest
 /// Tests for the Mastodon API service and post details functionality
 class MastodonPostTests: XCTestCase {
     
-    // Mock URL session for testing API calls
-    class MockURLSession: URLSessionProtocol {
-        var data: Data?
-        var response: URLResponse?
-        var error: Error?
-        
-        func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
-            completionHandler(data, response, error)
-            return URLSessionDataTask()
-        }
-        
-        func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-            if let error = error {
-                throw error
-            }
-            guard let data = data, let response = response else {
-                throw URLError(.unknown)
-            }
-            return (data, response)
-        }
-    }
-    
     /// Tests fetching statuses from the Mastodon API
     func testFetchMastodonStatuses() async throws {
         // Create mock data
-        let mockSession = MockURLSession()
+        let mockSession = SharedMockURLSession()
         
         // Sample API response data for account statuses endpoint
         let mockStatusesResponse = """
@@ -60,9 +38,9 @@ class MastodonPostTests: XCTestCase {
         ]
         """
         
-        mockSession.data = mockStatusesResponse.data(using: .utf8)
-        mockSession.response = HTTPURLResponse(url: URL(string: "https://example.com")!, statusCode: 200, httpVersion: nil, headerFields: nil)
-        mockSession.error = nil
+        mockSession.mockData = mockStatusesResponse.data(using: .utf8)
+        mockSession.mockResponse = HTTPURLResponse(url: URL(string: "https://example.com")!, statusCode: 200, httpVersion: nil, headerFields: nil)
+        mockSession.mockError = nil
         
         // Mock the account info endpoint as well
         let mockAccountResponse = """
@@ -145,7 +123,7 @@ class MastodonPostTests: XCTestCase {
             replies_count: 3,
             reblogs_count: 7,
             favourites_count: 15,
-            media_attachments: []
+            media_attachments: nil
         )
         
         // Create a source

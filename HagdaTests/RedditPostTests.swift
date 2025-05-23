@@ -4,32 +4,10 @@ import XCTest
 /// Tests for the Reddit API service and post details functionality
 class RedditPostTests: XCTestCase {
     
-    // Mock URL session for testing API calls
-    class MockURLSession: URLSessionProtocol {
-        var data: Data?
-        var response: URLResponse?
-        var error: Error?
-        
-        func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
-            completionHandler(data, response, error)
-            return URLSessionDataTask()
-        }
-        
-        func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-            if let error = error {
-                throw error
-            }
-            guard let data = data, let response = response else {
-                throw URLError(.unknown)
-            }
-            return (data, response)
-        }
-    }
-    
     /// Tests fetching posts from the Reddit API
     func testFetchRedditPosts() async throws {
         // Create mock data
-        let mockSession = MockURLSession()
+        let mockSession = SharedMockURLSession()
         
         // Sample API response data for subreddit posts
         let mockPostsResponse = """
@@ -62,9 +40,9 @@ class RedditPostTests: XCTestCase {
         }
         """
         
-        mockSession.data = mockPostsResponse.data(using: .utf8)
-        mockSession.response = HTTPURLResponse(url: URL(string: "https://example.com")!, statusCode: 200, httpVersion: nil, headerFields: nil)
-        mockSession.error = nil
+        mockSession.mockData = mockPostsResponse.data(using: .utf8)
+        mockSession.mockResponse = HTTPURLResponse(url: URL(string: "https://example.com")!, statusCode: 200, httpVersion: nil, headerFields: nil)
+        mockSession.mockError = nil
         
         // Create the API service with the mock session
         let service = RedditAPIService(session: mockSession)

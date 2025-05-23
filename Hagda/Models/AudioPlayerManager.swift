@@ -174,7 +174,15 @@ class AudioPlayerManager: NSObject, ObservableObject {
     }
     
     private func saveProgress(for episode: PodcastEpisode, time: TimeInterval) {
-        UserDefaults.standard.set(time, forKey: "progress_\(episode.id)")
+        // Get source ID from episode metadata if available
+        let sourceId = episode.metadata?["sourceId"] as? String ?? ""
+        
+        // Use enhanced progress tracker
+        PodcastProgressTracker.shared.saveProgress(
+            for: episode,
+            currentTime: time,
+            sourceId: sourceId
+        )
         
         // Mark as played if > 90% complete
         if duration > 0 && time / duration > 0.9 {
@@ -183,8 +191,7 @@ class AudioPlayerManager: NSObject, ObservableObject {
     }
     
     private func loadProgress(for episode: PodcastEpisode) -> TimeInterval? {
-        let time = UserDefaults.standard.double(forKey: "progress_\(episode.id)")
-        return time > 0 ? time : nil
+        return PodcastProgressTracker.shared.loadProgressTime(for: episode.id)
     }
     
     private func markAsPlayed(_ episode: PodcastEpisode) {
@@ -410,5 +417,6 @@ extension AudioPlayerManager {
         let artworkURL: String?
         let description: String?
         let publishDate: Date
+        let metadata: [String: Any]?
     }
 }

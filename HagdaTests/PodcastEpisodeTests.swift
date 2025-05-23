@@ -4,42 +4,6 @@ import XCTest
 /// Tests for the iTunes Search API service and podcast episode details functionality
 class PodcastEpisodeTests: XCTestCase {
     
-    // Mock URL session for testing API calls
-    class MockURLSession: URLSessionProtocol {
-        var data: Data?
-        var response: URLResponse?
-        var error: Error?
-        
-        func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
-            completionHandler(data, response, error)
-            return URLSessionDataTask()
-        }
-        
-        func dataTask(with url: URL, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
-            completionHandler(data, response, error)
-            return URLSessionDataTask()
-        }
-        
-        func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-            if let error = error {
-                throw error
-            }
-            guard let data = data, let response = response else {
-                throw URLError(.unknown)
-            }
-            return (data, response)
-        }
-        
-        func data(from url: URL) async throws -> (Data, URLResponse) {
-            if let error = error {
-                throw error
-            }
-            guard let data = data, let response = response else {
-                throw URLError(.unknown)
-            }
-            return (data, response)
-        }
-    }
     
     /// Tests parsing RSS feed data
     func testPodcastRSSParsing() async throws {
@@ -72,10 +36,10 @@ class PodcastEpisodeTests: XCTestCase {
         """.data(using: .utf8)!
         
         // Create mock session
-        let mockSession = MockURLSession()
-        mockSession.data = rssData
-        mockSession.response = HTTPURLResponse(url: URL(string: "https://example.com")!, statusCode: 200, httpVersion: nil, headerFields: nil)
-        mockSession.error = nil
+        let mockSession = SharedMockURLSession()
+        mockSession.mockData = rssData
+        mockSession.mockResponse = HTTPURLResponse(url: URL(string: "https://example.com")!, statusCode: 200, httpVersion: nil, headerFields: nil)
+        mockSession.mockError = nil
         
         // Create the iTunes Search API service with the mock session
         let service = ITunesSearchService(session: mockSession)

@@ -30,7 +30,8 @@ extension PodcastEpisode {
             duration: duration,
             artworkURL: artworkURL,
             description: description,
-            publishDate: item.date
+            publishDate: item.date,
+            metadata: item.metadata
         )
     }
     
