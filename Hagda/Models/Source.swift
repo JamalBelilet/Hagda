@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// Represents the different types of content sources available in the app
 enum SourceType: String, CaseIterable, Identifiable {
@@ -29,6 +30,17 @@ enum SourceType: String, CaseIterable, Identifiable {
         case .bluesky: return "Bluesky"
         case .mastodon: return "Mastodon"
         case .podcast: return "Podcast"
+        }
+    }
+    
+    /// Color associated with this source type
+    var color: Color {
+        switch self {
+        case .article: return .blue
+        case .reddit: return .orange
+        case .bluesky: return .cyan
+        case .mastodon: return .purple
+        case .podcast: return .green
         }
     }
     

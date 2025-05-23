@@ -47,11 +47,11 @@ extension SecureNetworking: URLSessionProtocol {
         return try await data(from: url)
     }
     
-    func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
+    func dataTask(with request: URLRequest, completionHandler: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
         return session.dataTask(with: request, completionHandler: completionHandler)
     }
     
-    func dataTask(with url: URL, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
+    func dataTask(with url: URL, completionHandler: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
         let request = networkSecurity.createSecureRequest(url: url)
         return session.dataTask(with: request, completionHandler: completionHandler)
     }

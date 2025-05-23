@@ -68,7 +68,7 @@ final class NetworkSecurity {
         // Privacy settings
         configuration.httpShouldSetCookies = false
         configuration.httpCookieAcceptPolicy = .never
-        configuration.discretionary = false
+        configuration.isDiscretionary = false
         
         return configuration
     }
