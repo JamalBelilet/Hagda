@@ -128,6 +128,7 @@ class MastodonPostTests: XCTestCase {
         
         // Create a source
         let source = Source(
+            id: UUID(),
             name: "Test User",
             type: .mastodon,
             description: "A test Mastodon account",
