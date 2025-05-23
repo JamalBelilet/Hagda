@@ -512,13 +512,20 @@ extension ContinueItemsView {
         .frame(height: 150)
     }
     
-    // Generate mock continue items for demonstration
+    // Generate continue items including real podcast progress
     private func generateMockContinueItems() -> [ContentItem] {
+        // Get real podcast progress first
+        let podcastProgress = PodcastProgressTracker.shared.getAllInProgressEpisodes()
+        let podcastItems = podcastProgress.prefix(5).map { entry in
+            PodcastProgressTracker.shared.createContentItem(from: entry)
+        }
+        
+        // Then generate mock items for other types
         let calendar = Calendar.current
         let now = Date()
         
-        // Create a variety of items for each content type
-        var allItems: [ContentItem] = []
+        // Start with real podcast items
+        var allItems: [ContentItem] = podcastItems
         
         // Article items
         allItems.append(ContentItem(
@@ -551,39 +558,6 @@ extension ContinueItemsView {
             • Emerging micro-frameworks and their specialized use cases
             """,
             progressPercentage: 0.22
-        ))
-        
-        // Podcast items
-        allItems.append(ContentItem(
-            title: "The Vergecast: AI's Role in Reshaping Media Consumption",
-            subtitle: "The Vergecast • 30 min remaining",
-            date: calendar.date(byAdding: .hour, value: -1, to: now) ?? now,
-            type: .podcast,
-            contentPreview: """
-            Coming up in this episode:
-            
-            • Analysis of how generative AI is changing content creation and consumption
-            • Interview with leading AI researcher on multi-modal models and their capabilities
-            • Discussion on context window size increases and what they mean for real-world applications
-            • Debate on the ethical implications of AI-generated media and potential regulations
-            """,
-            progressPercentage: 0.65
-        ))
-        
-        allItems.append(ContentItem(
-            title: "This Week in Tech: Apple's New Developer Tools Explained",
-            subtitle: "TWiT • 42 min remaining",
-            date: calendar.date(byAdding: .hour, value: -12, to: now) ?? now,
-            type: .podcast,
-            contentPreview: """
-            The episode continues with expert analysis on:
-            
-            • Detailed walkthrough of Apple's new development environment
-            • Practical applications of the new machine learning frameworks
-            • Cross-platform considerations and compatibility improvements
-            • Future roadmap predictions and strategic implications
-            """,
-            progressPercentage: 0.28
         ))
         
         // Reddit items - temporarily removed until we integrate real data

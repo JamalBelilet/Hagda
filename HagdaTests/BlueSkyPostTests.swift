@@ -4,32 +4,11 @@ import XCTest
 /// Tests for the BlueSky API service and post details functionality
 class BlueSkyPostTests: XCTestCase {
     
-    // Mock URL session for testing API calls
-    class MockURLSession: URLSessionProtocol {
-        var data: Data?
-        var response: URLResponse?
-        var error: Error?
-        
-        func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
-            completionHandler(data, response, error)
-            return URLSessionDataTask()
-        }
-        
-        func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-            if let error = error {
-                throw error
-            }
-            guard let data = data, let response = response else {
-                throw URLError(.unknown)
-            }
-            return (data, response)
-        }
-    }
     
     /// Tests fetching posts from the BlueSky API
     func testFetchBlueSkyPosts() async throws {
         // Create mock data
-        let mockSession = MockURLSession()
+        let mockSession = SharedMockURLSession()
         
         // Sample API response data for getAuthorFeed endpoint
         let mockFeedResponse = """
@@ -60,9 +39,9 @@ class BlueSkyPostTests: XCTestCase {
         }
         """
         
-        mockSession.data = mockFeedResponse.data(using: .utf8)
-        mockSession.response = HTTPURLResponse(url: URL(string: "https://example.com")!, statusCode: 200, httpVersion: nil, headerFields: nil)
-        mockSession.error = nil
+        mockSession.mockData = mockFeedResponse.data(using: .utf8)
+        mockSession.mockResponse = HTTPURLResponse(url: URL(string: "https://example.com")!, statusCode: 200, httpVersion: nil, headerFields: nil)
+        mockSession.mockError = nil
         
         // Create the API service with the mock session
         let service = BlueSkyAPIService(session: mockSession)
