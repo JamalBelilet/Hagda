@@ -4,6 +4,10 @@ import SwiftUI
 struct ArticleDetailView: View {
     let item: ContentItem
     @State private var viewModel: ArticleDetailViewModel
+    @StateObject private var progressTracker = ArticleProgressTracker.shared
+    @State private var scrollOffset: CGFloat = 0
+    @State private var contentHeight: CGFloat = 0
+    @State private var viewHeight: CGFloat = 0
     
     init(item: ContentItem) {
         self.item = item
@@ -11,6 +15,69 @@ struct ArticleDetailView: View {
     }
     
     var body: some View {
+        GeometryReader { geometry in
+            ScrollViewReader { scrollProxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        articleContent
+                            .background(
+                                GeometryReader { contentGeometry in
+                                    Color.clear
+                                        .preference(
+                                            key: ContentHeightPreferenceKey.self,
+                                            value: contentGeometry.size.height
+                                        )
+                                }
+                            )
+                            .id("articleTop")
+                    }
+                    .padding()
+                    .background(
+                        GeometryReader { scrollGeometry in
+                            Color.clear
+                                .preference(
+                                    key: ScrollOffsetPreferenceKey.self,
+                                    value: scrollGeometry.frame(in: .named("scroll")).minY
+                                )
+                        }
+                    )
+                }
+                .coordinateSpace(name: "scroll")
+                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                    let offset = -value
+                    scrollOffset = offset
+                    progressTracker.updateScrollProgress(
+                        for: item,
+                        scrollOffset: offset,
+                        contentHeight: contentHeight,
+                        viewHeight: viewHeight
+                    )
+                }
+                .onPreferenceChange(ContentHeightPreferenceKey.self) { value in
+                    contentHeight = value
+                }
+                .onAppear {
+                    viewHeight = geometry.size.height
+                    progressTracker.startTracking(for: item)
+                    
+                    // Restore scroll position if available
+                    if let (restoredPosition, _) = progressTracker.restoreProgress(for: item), restoredPosition > 0 {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            withAnimation {
+                                scrollProxy.scrollTo("articleTop", anchor: .top)
+                                // Note: Full scroll restoration would require more complex implementation
+                            }
+                        }
+                    }
+                }
+                .onDisappear {
+                    progressTracker.stopTracking(for: item)
+                }
+            }
+        }
+    }
+    
+    private var articleContent: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Article metadata
             HStack {
@@ -182,6 +249,22 @@ struct ArticleDetailView: View {
             #endif
             .cornerRadius(10)
         }
+    }
+}
+
+// MARK: - Preference Keys
+
+private struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+private struct ContentHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 

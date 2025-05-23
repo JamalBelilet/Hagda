@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 /// Represents the different types of content sources available in the app
-enum SourceType: String, CaseIterable, Identifiable {
+enum SourceType: String, CaseIterable, Identifiable, Codable {
     case article
     case reddit
     case bluesky

@@ -91,16 +91,43 @@ struct ContinueReadingView: View {
     
     // Load content items
     private func loadContent() {
-        continueItems = generateMockContinueItems()
+        continueItems = loadRealContinueItems()
     }
     
     // Refresh continue items - simulates a network request with async
     private func refreshContinueItems() async {
-        // Simulate network delay
-        try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
+        // Small delay for UI feedback
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
         
-        // Generate new items
-        continueItems = generateMockContinueItems()
+        // Load real items
+        continueItems = loadRealContinueItems()
+    }
+    
+    // Load real continue items from progress trackers
+    private func loadRealContinueItems() -> [ContentItem] {
+        var allItems: [ContentItem] = []
+        
+        // Get podcast progress items
+        let podcastProgress = PodcastProgressTracker.shared.getAllInProgressEpisodes()
+        let podcastItems = podcastProgress.map { entry in
+            PodcastProgressTracker.shared.createContentItem(from: entry)
+        }
+        allItems.append(contentsOf: podcastItems)
+        
+        // Get all other in-progress items from unified tracker
+        let progressItems = UnifiedProgressTracker.shared.getAllInProgressItems()
+        let otherItems = progressItems.map { progress in
+            UnifiedProgressTracker.shared.createContentItem(from: progress)
+        }
+        allItems.append(contentsOf: otherItems)
+        
+        // Sort by last accessed date (most recent first) and limit to 15 items
+        let sortedItems = allItems.sorted { item1, item2 in
+            // Use date for sorting
+            item1.date > item2.date
+        }
+        
+        return Array(sortedItems.prefix(15))
     }
     
     // Row for a continue item with progress indicator
@@ -187,89 +214,6 @@ struct ContinueReadingView: View {
         }
     }
     
-    // Generate mock continue items for demonstration - create more items for this view
-    private func generateMockContinueItems() -> [ContentItem] {
-        // Get real podcast progress first
-        let podcastProgress = PodcastProgressTracker.shared.getAllInProgressEpisodes()
-        let podcastItems = podcastProgress.map { entry in
-            PodcastProgressTracker.shared.createContentItem(from: entry)
-        }
-        
-        let calendar = Calendar.current
-        let now = Date()
-        
-        // Start with real podcast items
-        var items: [ContentItem] = podcastItems
-        
-        // Article items
-        items.append(ContentItem(
-            title: "The Evolution of Sustainable Technology: Green Tech in 2024",
-            subtitle: "From ZDNet • 8 min read",
-            date: calendar.date(byAdding: .hour, value: -4, to: now) ?? now,
-            type: .article,
-            contentPreview: """
-            The article continues with key sustainable technology trends of 2024:
-            
-            • How HPE's GreenLake platform is revolutionizing energy-efficient cloud services
-            • The rise of carbon-aware computing and its impact on enterprise IT strategy
-            • Renewable energy innovations powering next-gen data centers
-            • Circular economy principles applied to hardware procurement and disposal
-            """,
-            progressPercentage: 0.35
-        ))
-        
-        items.append(ContentItem(
-            title: "Web Development Frameworks in 2024: What's Hot and What's Not",
-            subtitle: "From DEV Community • 12 min read",
-            date: calendar.date(byAdding: .hour, value: -8, to: now) ?? now,
-            type: .article,
-            contentPreview: """
-            This in-depth analysis continues with framework benchmarks:
-            
-            • Performance comparison across major JavaScript frameworks
-            • Developer experience metrics and community support trends
-            • Enterprise adoption patterns and migration strategies
-            • Emerging micro-frameworks and their specialized use cases
-            """,
-            progressPercentage: 0.22
-        ))
-        
-        // Reddit items
-        items.append(ContentItem(
-            title: "The IT-Security Convergence: Why Your Organization Needs It",
-            subtitle: "r/cybersecurity • 15 min read",
-            date: calendar.date(byAdding: .hour, value: -6, to: now) ?? now,
-            type: .reddit,
-            contentPreview: """
-            The discussion continues with practical insights:
-            
-            • Case studies of organizations that successfully merged IT and security teams
-            • Key challenges in organizational structure and how to overcome them
-            • Training programs to build cross-functional expertise in both domains
-            • Metrics that show improved security posture after convergence
-            """,
-            progressPercentage: 0.42
-        ))
-        
-        items.append(ContentItem(
-            title: "I built a low-code tool that automates API testing - looking for feedback",
-            subtitle: "r/programming • 8 min read",
-            date: calendar.date(byAdding: .hour, value: -24, to: now) ?? now,
-            type: .reddit,
-            contentPreview: """
-            The post continues with the implementation details:
-            
-            • Technical architecture using Node.js and WebSockets
-            • Frontend implementation with React and state management
-            • Automated test generation from OpenAPI specifications
-            • Performance benchmarks and scalability considerations
-            """,
-            progressPercentage: 0.51
-        ))
-        
-        // Randomize the order a bit for variety
-        return items.shuffled()
-    }
     
     // Generate progress value for visual indicator
     private func progressValue(for item: ContentItem) -> CGFloat {
