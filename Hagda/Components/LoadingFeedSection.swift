@@ -89,7 +89,7 @@ struct LoadingFeedSection<Content: View>: View {
 }
 
 /// Enhanced feed section with automatic loading on appear
-struct AutoLoadingFeedSection<T: LoadingStateViewModel>: View where T.DataType == [ContentItem] {
+struct AutoLoadingFeedSection<T: LoadingStateViewModel & ObservableObject>: View where T.DataType == [ContentItem] {
     @ObservedObject var viewModel: T
     let title: String
     let sourceType: SourceType
@@ -102,7 +102,9 @@ struct AutoLoadingFeedSection<T: LoadingStateViewModel>: View where T.DataType =
             onRetry: viewModel.retry
         ) { items in
             ForEach(items) { item in
-                NavigationLink(value: item) {
+                NavigationLink {
+                    ContentDetailView(item: item)
+                } label: {
                     ContentItemRow(item: item)
                 }
             }
@@ -168,7 +170,7 @@ struct LoadingSourceRow: View {
                     // Retry action handled by parent
                 } label: {
                     Image(systemName: "arrow.clockwise")
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                 }
                 .buttonStyle(.plain)
             } else {

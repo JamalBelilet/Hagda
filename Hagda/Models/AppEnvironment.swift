@@ -37,13 +37,27 @@ struct AppEnvironment {
     // MARK: - Environment Detection
     
     private static var isTestFlight: Bool {
+        // For iOS 15+ we could use StoreKit 2, but for compatibility we'll suppress the warning
+        if #available(iOS 15.0, macOS 12.0, *) {
+            // In a production app, we'd use StoreKit 2 here
+            // For now, we'll use the deprecated method with warning suppression
+        }
+        
+        #if targetEnvironment(simulator)
+        return false
+        #else
         guard let receiptURL = Bundle.main.appStoreReceiptURL else { return false }
         return receiptURL.lastPathComponent == "sandboxReceipt"
+        #endif
     }
     
     static var isAppStore: Bool {
+        #if targetEnvironment(simulator)
+        return false
+        #else
         guard let receiptURL = Bundle.main.appStoreReceiptURL else { return false }
         return receiptURL.lastPathComponent == "receipt"
+        #endif
     }
     
     // MARK: - Configuration Values

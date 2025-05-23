@@ -104,25 +104,23 @@ extension LoadingStateViewModel {
 }
 
 /// Async operation wrapper with timeout
-extension Task where Success == Never, Failure == Never {
-    static func timeout<T>(
-        seconds: TimeInterval,
-        operation: @escaping () async throws -> T
-    ) async throws -> T {
-        try await withThrowingTaskGroup(of: T.self) { group in
-            group.addTask {
-                try await operation()
-            }
-            
-            group.addTask {
-                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                throw AppError.network(.timeout)
-            }
-            
-            let result = try await group.next()!
-            group.cancelAll()
-            return result
+func withTimeout<T>(
+    seconds: TimeInterval,
+    operation: @escaping () async throws -> T
+) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask {
+            try await operation()
         }
+        
+        group.addTask {
+            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            throw AppError.network(.timeout)
+        }
+        
+        let result = try await group.next()!
+        group.cancelAll()
+        return result
     }
 }
 
@@ -141,33 +139,32 @@ struct RetryConfiguration {
     )
 }
 
-extension Task where Failure == Error {
-    static func retry<T>(
-        config: RetryConfiguration = .default,
-        operation: @escaping () async throws -> T
-    ) async throws -> T {
-        var lastError: Error?
-        var delay = config.initialDelay
-        
-        for attempt in 1...config.maxAttempts {
-            do {
-                return try await operation()
-            } catch {
-                lastError = error
-                
-                // Check if error is retryable
-                if let appError = error as? AppError, !appError.isRetryable {
-                    throw error
-                }
-                
-                // Don't delay after the last attempt
-                if attempt < config.maxAttempts {
-                    try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-                    delay = min(delay * config.multiplier, config.maxDelay)
-                }
+/// Retry an async operation with exponential backoff
+func retry<T>(
+    config: RetryConfiguration = .default,
+    operation: @escaping () async throws -> T
+) async throws -> T {
+    var lastError: Error?
+    var delay = config.initialDelay
+    
+    for attempt in 1...config.maxAttempts {
+        do {
+            return try await operation()
+        } catch {
+            lastError = error
+            
+            // Check if error is retryable
+            if let appError = error as? AppError, !appError.isRetryable {
+                throw error
+            }
+            
+            // Don't delay after the last attempt
+            if attempt < config.maxAttempts {
+                try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                delay = min(delay * config.multiplier, config.maxDelay)
             }
         }
-        
-        throw lastError ?? AppError.unknown(NSError(domain: "RetryError", code: 0))
     }
+    
+    throw lastError ?? AppError.unknown(NSError(domain: "RetryError", code: 0))
 }
