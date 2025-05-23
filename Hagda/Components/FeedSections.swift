@@ -512,59 +512,19 @@ extension ContinueItemsView {
         .frame(height: 150)
     }
     
-    // Generate continue items including real podcast progress
+    // Load real continue items from progress trackers
     private func generateMockContinueItems() -> [ContentItem] {
-        // Get real podcast progress first
-        let podcastProgress = PodcastProgressTracker.shared.getAllInProgressEpisodes()
-        let podcastItems = podcastProgress.prefix(5).map { entry in
-            PodcastProgressTracker.shared.createContentItem(from: entry)
+        // Get all in-progress items from unified tracker
+        let progressItems = UnifiedProgressTracker.shared.getAllInProgressItems()
+        
+        // Convert to ContentItems
+        let items = progressItems.map { progress in
+            UnifiedProgressTracker.shared.createContentItem(from: progress)
         }
         
-        // Then generate mock items for other types
-        let calendar = Calendar.current
-        let now = Date()
-        
-        // Start with real podcast items
-        var allItems: [ContentItem] = podcastItems
-        
-        // Article items
-        allItems.append(ContentItem(
-            title: "The Evolution of Sustainable Technology: Green Tech in 2024",
-            subtitle: "From ZDNet • 8 min read",
-            date: calendar.date(byAdding: .hour, value: -4, to: now) ?? now,
-            type: .article,
-            contentPreview: """
-            The article continues with key sustainable technology trends of 2024:
-            
-            • How HPE's GreenLake platform is revolutionizing energy-efficient cloud services
-            • The rise of carbon-aware computing and its impact on enterprise IT strategy
-            • Renewable energy innovations powering next-gen data centers
-            • Circular economy principles applied to hardware procurement and disposal
-            """,
-            progressPercentage: 0.35
-        ))
-        
-        allItems.append(ContentItem(
-            title: "Web Development Frameworks in 2024: What's Hot and What's Not",
-            subtitle: "From DEV Community • 12 min read",
-            date: calendar.date(byAdding: .hour, value: -8, to: now) ?? now,
-            type: .article,
-            contentPreview: """
-            This in-depth analysis continues with framework benchmarks:
-            
-            • Performance comparison across major JavaScript frameworks
-            • Developer experience metrics and community support trends
-            • Enterprise adoption patterns and migration strategies
-            • Emerging micro-frameworks and their specialized use cases
-            """,
-            progressPercentage: 0.22
-        ))
-        
-        // Reddit items - temporarily removed until we integrate real data
-        // TODO: Fetch from user's reading history
-        
-        // Shuffle all items and return 4-6 items to ensure we have enough to show the "See All" button
-        return Array(allItems.shuffled().prefix(Int.random(in: 4...6)))
+        // Return 4-6 items to ensure we have enough to show the "See All" button
+        let itemCount = min(items.count, Int.random(in: 4...6))
+        return Array(items.prefix(itemCount))
     }
     
     // Generate progress value for visual indicator

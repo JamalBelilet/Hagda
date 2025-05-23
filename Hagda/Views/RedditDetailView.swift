@@ -4,6 +4,8 @@ import SwiftUI
 struct RedditDetailView: View {
     let item: ContentItem
     @State private var viewModel: RedditDetailViewModel
+    @StateObject private var progressTracker = RedditProgressTracker.shared
+    @State private var showComments = false
     
     init(item: ContentItem) {
         self.item = item
@@ -88,6 +90,10 @@ struct RedditDetailView: View {
             Text(viewModel.postContent)
                 .font(.body)
                 .lineSpacing(5)
+                .onAppear {
+                    // Mark post as read when content appears
+                    progressTracker.markPostAsRead(item: item)
+                }
             
             // Optional image
             if viewModel.hasImage, let imageURL = viewModel.imageURL {
@@ -171,6 +177,12 @@ struct RedditDetailView: View {
                     }
                 }
             }
+        }
+        .onAppear {
+            progressTracker.startTracking(for: item)
+        }
+        .onDisappear {
+            progressTracker.stopTracking()
         }
     }
 }
