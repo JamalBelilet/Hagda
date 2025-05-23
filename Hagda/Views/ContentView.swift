@@ -19,10 +19,20 @@ struct ContentView: View {
     // MARK: - Body
     
     var body: some View {
-        NavigationStack {
-            FeedView()
+        ZStack(alignment: .bottom) {
+            NavigationStack {
+                FeedView()
+                    // Add padding to account for mini player
+                    .safeAreaInset(edge: .bottom) {
+                        // Spacer for mini player height
+                        Color.clear.frame(height: 64)
+                    }
+            }
+            .accessibilityIdentifier("MainNavigationStack")
+            
+            // Mini player overlay
+            MiniPlayerView()
         }
-        .accessibilityIdentifier("MainNavigationStack")
         .onAppear {
             // Set an accessibility label for UI testing
             #if os(iOS) || os(visionOS)

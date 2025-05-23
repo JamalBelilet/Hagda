@@ -61,8 +61,18 @@ Configure App Transport Security to ensure secure connections:
 5. For App Transport Security, use the "App Transport Security Settings" section
 6. For URL Types, use the "URL Types" section
 
+## Background Audio
+
+For podcast playback functionality, add:
+```xml
+<key>UIBackgroundModes</key>
+<array>
+    <string>audio</string>
+</array>
+```
+
 ## Additional Requirements
 
 - Privacy Policy URL: Required in App Store Connect
 - Terms of Service URL: Required if app has user accounts or subscriptions
-- App uses background modes: Only add if implementing background functionality
+- App uses background modes: Required for podcast playback functionality

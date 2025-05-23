@@ -4,6 +4,9 @@ import SwiftUI
 struct PodcastDetailView: View {
     let item: ContentItem
     @State private var viewModel: PodcastDetailViewModel
+    @ObservedObject private var playerManager = AudioPlayerManager.shared
+    @State private var showingSleepTimer = false
+    @State private var showingSpeedPicker = false
     
     init(item: ContentItem) {
         self.item = item
@@ -124,26 +127,39 @@ struct PodcastDetailView: View {
                 // Control buttons
                 HStack(spacing: 40) {
                     Button {
-                        viewModel.rewind15Seconds()
+                        if isCurrentEpisode {
+                            playerManager.skipBackward(15)
+                        }
                     } label: {
                         Image(systemName: "gobackward.15")
                             .font(.system(size: 28))
                     }
+                    .disabled(!isCurrentEpisode)
                     
                     Button {
-                        viewModel.togglePlayback()
+                        if let episode = PodcastEpisode.fromContentItem(item) {
+                            if isCurrentEpisode && playerManager.isPlaying {
+                                playerManager.pause()
+                            } else {
+                                playerManager.play(episode: episode)
+                            }
+                        }
                     } label: {
-                        Image(systemName: viewModel.isPlaying ? "pause.circle" : "play.circle")
+                        Image(systemName: playButtonIcon)
                             .font(.system(size: 54))
                             .foregroundStyle(Color.accentColor)
                     }
+                    .disabled(!canPlay)
                     
                     Button {
-                        viewModel.fastForward15Seconds()
+                        if isCurrentEpisode {
+                            playerManager.skipForward(30)
+                        }
                     } label: {
-                        Image(systemName: "goforward.15")
+                        Image(systemName: "goforward.30")
                             .font(.system(size: 28))
                     }
+                    .disabled(!isCurrentEpisode)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
@@ -157,9 +173,9 @@ struct PodcastDetailView: View {
                     }
                     
                     Button {
-                        // Speed
+                        showingSpeedPicker = true
                     } label: {
-                        Text("1.0x")
+                        Text(formatSpeed(playerManager.playbackRate))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             #if os(iOS) || os(visionOS)
@@ -171,9 +187,10 @@ struct PodcastDetailView: View {
                     }
                     
                     Button {
-                        // Sleep timer
+                        showingSleepTimer = true
                     } label: {
-                        Image(systemName: "timer")
+                        Image(systemName: SleepTimer.shared.isActive ? "timer.circle.fill" : "timer")
+                            .foregroundStyle(SleepTimer.shared.isActive ? Color.purple : .secondary)
                     }
                     
                     Button {
@@ -230,6 +247,18 @@ struct PodcastDetailView: View {
                 .cornerRadius(8)
             }
         }
+        .sheet(isPresented: $showingSleepTimer) {
+            SleepTimerView()
+                #if os(iOS)
+                .presentationDetents([.medium])
+                #endif
+        }
+        .sheet(isPresented: $showingSpeedPicker) {
+            SpeedPickerView(selectedSpeed: $playerManager.playbackRate)
+                #if os(iOS)
+                .presentationDetents([.height(300)])
+                #endif
+        }
     }
     
     private var artworkPlaceholder: some View {
@@ -275,6 +304,36 @@ struct PodcastDetailView: View {
             .background(Color.gray.opacity(0.15))
             #endif
             .cornerRadius(10)
+        }
+    }
+    
+    // MARK: - Helper Properties
+    
+    private var isCurrentEpisode: Bool {
+        if let currentId = playerManager.currentEpisode?.id,
+           let episodeId = item.metadata["episodeGuid"] as? String {
+            return currentId == episodeId
+        }
+        return false
+    }
+    
+    private var playButtonIcon: String {
+        if isCurrentEpisode && playerManager.isPlaying {
+            return "pause.circle.fill"
+        } else {
+            return "play.circle.fill"
+        }
+    }
+    
+    private var canPlay: Bool {
+        return item.metadata["audioUrl"] as? String != nil
+    }
+    
+    private func formatSpeed(_ speed: Float) -> String {
+        if speed == 1.0 {
+            return "1×"
+        } else {
+            return String(format: "%.1g×", speed)
         }
     }
 }
