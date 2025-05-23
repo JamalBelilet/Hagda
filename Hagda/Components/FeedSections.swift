@@ -514,17 +514,30 @@ extension ContinueItemsView {
     
     // Load real continue items from progress trackers
     private func generateMockContinueItems() -> [ContentItem] {
-        // Get all in-progress items from unified tracker
-        let progressItems = UnifiedProgressTracker.shared.getAllInProgressItems()
+        var allItems: [ContentItem] = []
         
-        // Convert to ContentItems
-        let items = progressItems.map { progress in
+        // Get podcast progress items
+        let podcastProgress = PodcastProgressTracker.shared.getAllInProgressEpisodes()
+        let podcastItems = podcastProgress.map { entry in
+            PodcastProgressTracker.shared.createContentItem(from: entry)
+        }
+        allItems.append(contentsOf: podcastItems)
+        
+        // Get all other in-progress items from unified tracker
+        let progressItems = UnifiedProgressTracker.shared.getAllInProgressItems()
+        let otherItems = progressItems.map { progress in
             UnifiedProgressTracker.shared.createContentItem(from: progress)
+        }
+        allItems.append(contentsOf: otherItems)
+        
+        // Sort by last accessed date (most recent first)
+        let sortedItems = allItems.sorted { item1, item2 in
+            item1.date > item2.date
         }
         
         // Return 4-6 items to ensure we have enough to show the "See All" button
-        let itemCount = min(items.count, Int.random(in: 4...6))
-        return Array(items.prefix(itemCount))
+        let itemCount = min(sortedItems.count, Int.random(in: 4...6))
+        return Array(sortedItems.prefix(itemCount))
     }
     
     // Generate progress value for visual indicator

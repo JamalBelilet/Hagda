@@ -105,16 +105,29 @@ struct ContinueReadingView: View {
     
     // Load real continue items from progress trackers
     private func loadRealContinueItems() -> [ContentItem] {
-        // Get all in-progress items from unified tracker
-        let progressItems = UnifiedProgressTracker.shared.getAllInProgressItems()
+        var allItems: [ContentItem] = []
         
-        // Convert to ContentItems
-        let items = progressItems.map { progress in
+        // Get podcast progress items
+        let podcastProgress = PodcastProgressTracker.shared.getAllInProgressEpisodes()
+        let podcastItems = podcastProgress.map { entry in
+            PodcastProgressTracker.shared.createContentItem(from: entry)
+        }
+        allItems.append(contentsOf: podcastItems)
+        
+        // Get all other in-progress items from unified tracker
+        let progressItems = UnifiedProgressTracker.shared.getAllInProgressItems()
+        let otherItems = progressItems.map { progress in
             UnifiedProgressTracker.shared.createContentItem(from: progress)
         }
+        allItems.append(contentsOf: otherItems)
         
-        // Limit to 15 most recent items
-        return Array(items.prefix(15))
+        // Sort by last accessed date (most recent first) and limit to 15 items
+        let sortedItems = allItems.sorted { item1, item2 in
+            // Use date for sorting
+            item1.date > item2.date
+        }
+        
+        return Array(sortedItems.prefix(15))
     }
     
     // Row for a continue item with progress indicator
