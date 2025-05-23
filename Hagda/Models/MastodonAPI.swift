@@ -452,38 +452,59 @@ class MastodonAPIService {
         ]
         
         guard let url = components?.url else {
-            throw URLError(.badURL)
+            throw AppError.network(.notFound)
         }
         
-        // Create the request
+        // Create the request with timeout
         var request = URLRequest(url: url)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Hagda/1.0", forHTTPHeaderField: "User-Agent")
+        request.timeoutInterval = 30.0 // 30 second timeout
         
-        // Execute the request with async/await
-        let (data, response) = try await session.data(for: request)
-        
-        // Check response
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw URLError(.badServerResponse)
+        do {
+            // Execute the request with async/await
+            let (data, response) = try await session.data(for: request)
+            
+            // Check HTTP response
+            if let httpResponse = response as? HTTPURLResponse {
+                if let error = httpResponse.asNetworkError {
+                    throw AppError.network(error)
+                }
+            }
+            
+            // Check for empty data
+            guard !data.isEmpty else {
+                throw AppError.parsing(.emptyResponse)
+            }
+            
+            #if DEBUG
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("Mastodon API response: \(jsonString.prefix(200))...")
+            }
+            #endif
+            
+            // Parse the response
+            let statuses = try JSONDecoder().decode([MastodonStatus].self, from: data)
+            
+            // Check for empty results
+            if statuses.isEmpty {
+                throw AppError.parsing(.emptyResponse)
+            }
+            
+            // Get the account info to create a source
+            let accountData = try await fetchAccountInfo(accountID: accountID)
+            let source = accountData.toSource()
+            
+            // Convert to ContentItem objects
+            return statuses.map { $0.toContentItem(source: source) }
+            
+        } catch let error as URLError {
+            throw error.asAppError
+        } catch let error as AppError {
+            throw error
+        } catch {
+            throw AppError.parsing(.invalidJSON)
         }
-        
-        #if DEBUG
-        if let jsonString = String(data: data, encoding: .utf8) {
-            print("Mastodon API response: \(jsonString.prefix(200))...")
-        }
-        #endif
-        
-        // Parse the response
-        let statuses = try JSONDecoder().decode([MastodonStatus].self, from: data)
-        
-        // Get the account info to create a source
-        let accountData = try await fetchAccountInfo(accountID: accountID)
-        let source = accountData.toSource()
-        
-        // Convert to ContentItem objects
-        return statuses.map { $0.toContentItem(source: source) }
     }
     
     /// Fetch a specific Mastodon account by ID

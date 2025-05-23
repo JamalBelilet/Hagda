@@ -297,7 +297,7 @@ class RedditAPIService {
         }
     }
     
-    /// Fetch content from a subreddit
+    /// Fetch posts from a subreddit
     /// - Parameters:
     ///   - subredditName: The name of the subreddit (without "r/")
     ///   - limit: Maximum number of results (default: 20)
@@ -314,57 +314,91 @@ class RedditAPIService {
         ]
         
         guard let url = components?.url else {
-            throw URLError(.badURL)
+            throw AppError.network(.notFound)
         }
         
-        // Create the request
+        // Create the request with timeout
         var request = URLRequest(url: url)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Hagda/1.0", forHTTPHeaderField: "User-Agent") // Reddit API requires a user agent
+        request.timeoutInterval = 30.0 // 30 second timeout
         
-        // Execute the request with async/await
-        let (data, _) = try await session.data(for: request)
-        
-        #if DEBUG
-        // Print the JSON response for debugging
-        if let jsonString = String(data: data, encoding: .utf8) {
-            print("Reddit API response: \(jsonString.prefix(200))...")
-        }
-        #endif
-        
-        // Parse the response using the posts-specific model
-        let response = try JSONDecoder().decode(RedditPostResponse.self, from: data)
-        
-        // Convert to ContentItem objects
-        return response.data.children.compactMap { child -> ContentItem? in
-            let post = child.data
+        do {
+            // Execute the request with async/await
+            let (data, response) = try await session.data(for: request)
             
-            // Create a date from the UTC timestamp
-            let date = Date(timeIntervalSince1970: post.created_utc)
+            // Check HTTP response
+            if let httpResponse = response as? HTTPURLResponse {
+                if let error = httpResponse.asNetworkError {
+                    throw AppError.network(error)
+                }
+            }
             
-            // Generate a content preview from the post selftext if available
-            let contentPreview = post.selftext ?? "No content available for this post."
+            // Check for empty data
+            guard !data.isEmpty else {
+                throw AppError.parsing(.emptyResponse)
+            }
             
-            return ContentItem(
-                title: post.title,
-                subtitle: "Posted by u/\(post.author ?? "unknown") • \(post.num_comments) comments",
-                date: date,
-                type: .reddit,
-                contentPreview: contentPreview,
-                progressPercentage: 0.0, // New posts start with 0 progress
-                metadata: [
-                    "postId": post.id,
-                    "author": post.author ?? "unknown",
-                    "subreddit": post.subreddit,
-                    "subredditPrefixed": post.subreddit_name_prefixed,
-                    "ups": post.ups ?? 0,
-                    "downs": post.downs ?? 0,
-                    "numComments": post.num_comments,
-                    "url": post.url ?? "",
-                    "permalink": post.permalink ?? "",
-                    "selftext": post.selftext ?? ""
-                ]
-            )
+            #if DEBUG
+            // Print the JSON response for debugging
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("Reddit API response: \(jsonString.prefix(200))...")
+            }
+            #endif
+            
+            // Parse the response using the posts-specific model
+            let redditResponse = try JSONDecoder().decode(RedditPostResponse.self, from: data)
+            
+            // Check for empty results
+            if redditResponse.data.children.isEmpty {
+                throw AppError.parsing(.emptyResponse)
+            }
+            
+            // Convert to ContentItem objects
+            let items = redditResponse.data.children.compactMap { child -> ContentItem? in
+                let post = child.data
+                
+                // Create a date from the UTC timestamp
+                let date = Date(timeIntervalSince1970: post.created_utc)
+                
+                // Generate a content preview from the post selftext if available
+                let contentPreview = post.selftext ?? "No content available for this post."
+                
+                return ContentItem(
+                    title: post.title,
+                    subtitle: "Posted by u/\(post.author ?? "unknown") • \(post.num_comments) comments",
+                    date: date,
+                    type: .reddit,
+                    contentPreview: contentPreview,
+                    progressPercentage: 0.0, // New posts start with 0 progress
+                    metadata: [
+                        "postId": post.id,
+                        "author": post.author ?? "unknown",
+                        "subreddit": post.subreddit,
+                        "subredditPrefixed": post.subreddit_name_prefixed,
+                        "ups": post.ups ?? 0,
+                        "downs": post.downs ?? 0,
+                        "numComments": post.num_comments,
+                        "url": post.url ?? "",
+                        "permalink": post.permalink ?? "",
+                        "selftext": post.selftext ?? ""
+                    ]
+                )
+            }
+            
+            // Ensure we have at least some items
+            guard !items.isEmpty else {
+                throw AppError.parsing(.emptyResponse)
+            }
+            
+            return items
+            
+        } catch let error as URLError {
+            throw error.asAppError
+        } catch let error as AppError {
+            throw error
+        } catch {
+            throw AppError.parsing(.invalidJSON)
         }
     }
 }

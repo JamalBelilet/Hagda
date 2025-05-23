@@ -598,42 +598,63 @@ class BlueSkyAPIService {
         ]
         
         guard let url = components?.url else {
-            throw URLError(.badURL)
+            throw AppError.network(.notFound)
         }
         
-        // Create the request
+        // Create the request with timeout
         var request = URLRequest(url: url)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Hagda/1.0", forHTTPHeaderField: "User-Agent")
+        request.timeoutInterval = 30.0 // 30 second timeout
         
         // Add auth token if available
         if let token = accessToken {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
-        // Execute the request with async/await
-        let (data, response) = try await session.data(for: request)
-        
-        // Check response
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw URLError(.badServerResponse)
+        do {
+            // Execute the request with async/await
+            let (data, response) = try await session.data(for: request)
+            
+            // Check HTTP response
+            if let httpResponse = response as? HTTPURLResponse {
+                if let error = httpResponse.asNetworkError {
+                    throw AppError.network(error)
+                }
+            }
+            
+            // Check for empty data
+            guard !data.isEmpty else {
+                throw AppError.parsing(.emptyResponse)
+            }
+            
+            #if DEBUG
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("Bluesky API response: \(jsonString.prefix(200))...")
+            }
+            #endif
+            
+            // Parse the response - now using public API format
+            let feedResponse = try JSONDecoder().decode(GetAuthorFeedResponse.self, from: data)
+            
+            // Check for empty results
+            if feedResponse.safeFeed.isEmpty {
+                throw AppError.parsing(.emptyResponse)
+            }
+            
+            // Get account info to create a source
+            let source = try await lookupAccount(handle: handle)
+            
+            // Convert to ContentItem objects
+            return feedResponse.safeFeed.map { $0.post.toContentItem(source: source) }
+            
+        } catch let error as URLError {
+            throw error.asAppError
+        } catch let error as AppError {
+            throw error
+        } catch {
+            throw AppError.parsing(.invalidJSON)
         }
-        
-        #if DEBUG
-        if let jsonString = String(data: data, encoding: .utf8) {
-            print("Bluesky API response: \(jsonString.prefix(200))...")
-        }
-        #endif
-        
-        // Parse the response - now using public API format
-        let feedResponse = try JSONDecoder().decode(GetAuthorFeedResponse.self, from: data)
-        
-        // Get account info to create a source
-        let source = try await lookupAccount(handle: handle)
-        
-        // Convert to ContentItem objects
-        return feedResponse.safeFeed.map { $0.post.toContentItem(source: source) }
     }
     
     /// Fetch content for a Bluesky source

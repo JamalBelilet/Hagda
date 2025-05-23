@@ -92,27 +92,40 @@ class NewsAPIService {
     /// - Returns: Array of ContentItem objects representing articles
     func fetchArticles(for source: Source, limit: Int = 20) async throws -> [ContentItem] {
         guard let feedUrl = source.feedUrl, let url = URL(string: feedUrl) else {
-            throw URLError(.badURL)
+            throw AppError.network(.notFound)
         }
         
         do {
+            // Create request with timeout
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 30.0 // 30 second timeout
+            request.setValue("Hagda/1.0", forHTTPHeaderField: "User-Agent")
+            
             // Fetch and parse the RSS feed
-            let (data, _) = try await session.data(from: url)
+            let (data, response) = try await session.data(for: request)
+            
+            // Check HTTP response
+            if let httpResponse = response as? HTTPURLResponse {
+                if let error = httpResponse.asNetworkError {
+                    throw AppError.network(error)
+                }
+            }
+            
+            // Check for empty data
+            guard !data.isEmpty else {
+                throw AppError.parsing(.emptyResponse)
+            }
+            
             let parser = RSSParser()
             let items = parser.parse(data: data)
             
             // If no items were parsed, possibly due to malformed XML, handle the error
             if items.isEmpty {
-                #if DEBUG
-                // In debug mode, return sample data
-                return generateSampleArticles(for: source, count: limit)
-                #else
-                throw URLError(.cannotParseResponse)
-                #endif
+                throw AppError.parsing(.emptyResponse)
             }
             
             // Convert to NewsArticle and then ContentItems with metadata
-            return items.prefix(limit).map { newsItem in
+            let articles = items.prefix(limit).map { newsItem in
                 let article = NewsArticle(
                     guid: newsItem.link,
                     title: newsItem.title,
@@ -126,13 +139,21 @@ class NewsAPIService {
                 )
                 return article.toContentItem(newsSource: source)
             }
-        } catch {
-            #if DEBUG
-            // In debug mode, return sample data
-            return generateSampleArticles(for: source, count: limit)
-            #else
+            
+            // Ensure we have at least some articles
+            guard !articles.isEmpty else {
+                throw AppError.parsing(.emptyResponse)
+            }
+            
+            return articles
+            
+        } catch let error as URLError {
+            throw error.asAppError
+        } catch let error as AppError {
             throw error
-            #endif
+        } catch {
+            // For XML parsing errors or other issues
+            throw AppError.parsing(.invalidFormat)
         }
     }
     
