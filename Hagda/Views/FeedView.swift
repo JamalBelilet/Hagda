@@ -12,6 +12,7 @@ struct FeedView: View {
     @State private var showDailyDetails = false
     @State private var showContentDetail = false
     @State private var selectedContentItem: ContentItem?
+    @State private var showSettings = false
     @Environment(AppModel.self) private var appModel
     
     // MARK: - Body
@@ -37,6 +38,16 @@ struct FeedView: View {
         .navigationTitle("Hagda")
         .toolbar {
             #if os(iOS) || os(visionOS)
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    showSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 18))
+                        .accessibilityIdentifier("SettingsButton")
+                }
+            }
+            
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink(value: "library") {
                     Image(systemName: "plus")
@@ -106,6 +117,9 @@ struct FeedView: View {
             if let item = selectedContentItem {
                 ContentDetailView(item: item)
             }
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
         }
     }
     
