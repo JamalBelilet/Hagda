@@ -11,13 +11,14 @@ struct ContentItem: Identifiable, Equatable {
     let contentPreview: String
     let progressPercentage: Double
     let metadata: [String: Any]  // Store platform-specific data
+    let source: Source
     
     // Implement Equatable to allow comparison of ContentItems
     static func == (lhs: ContentItem, rhs: ContentItem) -> Bool {
         lhs.id == rhs.id
     }
     
-    init(id: UUID = UUID(), title: String, subtitle: String, date: Date, type: SourceType, contentPreview: String = "", progressPercentage: Double = 0.0, metadata: [String: Any] = [:]) {
+    init(id: UUID = UUID(), title: String, subtitle: String, date: Date, type: SourceType, contentPreview: String = "", progressPercentage: Double = 0.0, metadata: [String: Any] = [:], source: Source? = nil) {
         self.id = id
         self.title = title
         self.subtitle = subtitle
@@ -26,6 +27,13 @@ struct ContentItem: Identifiable, Equatable {
         self.contentPreview = contentPreview
         self.progressPercentage = progressPercentage
         self.metadata = metadata
+        // Use a default source if none provided
+        self.source = source ?? Source(
+            name: "Sample Source",
+            type: type,
+            url: "https://example.com",
+            description: "Sample source"
+        )
     }
 }
 
@@ -105,6 +113,55 @@ extension ContentItem {
 
 // MARK: - Sample Data
 extension ContentItem {
+    /// Sample content items for testing
+    static let sampleItems: [ContentItem] = [
+        ContentItem(
+            title: "SwiftUI 5.0 Released with Major Performance Improvements",
+            subtitle: "TechCrunch • 2 hours ago",
+            date: Date().addingTimeInterval(-7200),
+            type: .article,
+            contentPreview: "Apple has released SwiftUI 5.0 with significant performance improvements...",
+            progressPercentage: 0.3,
+            source: Source(name: "TechCrunch", type: .article, url: "https://techcrunch.com", description: "Tech news")
+        ),
+        ContentItem(
+            title: "Discussion: Best practices for async/await in Swift",
+            subtitle: "r/swift • 150 comments",
+            date: Date().addingTimeInterval(-14400),
+            type: .reddit,
+            contentPreview: "What are your favorite patterns when working with async/await?",
+            progressPercentage: 0.0,
+            source: Source(name: "r/swift", type: .reddit, url: "https://reddit.com/r/swift", description: "Swift programming")
+        ),
+        ContentItem(
+            title: "Swift Talk: Advanced Concurrency Patterns",
+            subtitle: "45 min • objc.io",
+            date: Date().addingTimeInterval(-86400),
+            type: .podcast,
+            contentPreview: "In this episode, we explore advanced concurrency patterns...",
+            progressPercentage: 0.65,
+            source: Source(name: "Swift Talk", type: .podcast, url: "https://talk.objc.io", description: "Swift podcast")
+        ),
+        ContentItem(
+            title: "New SwiftUI property wrappers are game changers",
+            subtitle: "@johnsundell@mastodon.social",
+            date: Date().addingTimeInterval(-3600),
+            type: .mastodon,
+            contentPreview: "Just discovered the new @Observable macro and it's amazing...",
+            progressPercentage: 0.0,
+            source: Source(name: "@johnsundell", type: .mastodon, url: "https://mastodon.social/@johnsundell", description: "Swift developer")
+        ),
+        ContentItem(
+            title: "iOS 18 Beta 3 Released",
+            subtitle: "MacRumors • 5 hours ago",
+            date: Date().addingTimeInterval(-18000),
+            type: .article,
+            contentPreview: "Apple has released the third beta of iOS 18 to developers...",
+            progressPercentage: 0.0,
+            source: Source(name: "MacRumors", type: .article, url: "https://macrumors.com", description: "Apple news")
+        )
+    ]
+    
     /// Generates sample content items for a given source
     static func samplesForSource(_ source: Source, count: Int = 15) -> [ContentItem] {
         let today = Date()
@@ -123,7 +180,8 @@ extension ContentItem {
                     date: date,
                     type: .article,
                     contentPreview: "",
-                    progressPercentage: 0.0
+                    progressPercentage: 0.0,
+                    source: source
                 )
             case .reddit:
                 // Return empty item - real data should come from Reddit API
@@ -133,7 +191,8 @@ extension ContentItem {
                     date: date,
                     type: .reddit,
                     contentPreview: "Content will be loaded from the Reddit API.",
-                    progressPercentage: 0.0
+                    progressPercentage: 0.0,
+                    source: source
                 )
             case .bluesky:
                 // Return empty item - real data should come from Bluesky API
@@ -143,7 +202,8 @@ extension ContentItem {
                     date: date,
                     type: .bluesky,
                     contentPreview: "Content will be loaded from the Bluesky API.",
-                    progressPercentage: 0.0
+                    progressPercentage: 0.0,
+                    source: source
                 )
             case .mastodon:
                 // Return loading state for Mastodon posts since they're fetched from API
@@ -153,7 +213,8 @@ extension ContentItem {
                     date: date,
                     type: .mastodon,
                     contentPreview: "",
-                    progressPercentage: 0.0
+                    progressPercentage: 0.0,
+                    source: source
                 )
             case .podcast:
                 // Return loading state for Podcast episodes since they're fetched from RSS
@@ -163,7 +224,8 @@ extension ContentItem {
                     date: date,
                     type: .podcast,
                     contentPreview: "",
-                    progressPercentage: 0.0
+                    progressPercentage: 0.0,
+                    source: source
                 )
             }
         }
