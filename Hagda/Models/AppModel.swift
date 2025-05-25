@@ -61,10 +61,12 @@ class AppModel {
     /// Daily brief generator
     private var _dailyBriefGenerator: DailyBriefGenerator?
     var dailyBriefGenerator: DailyBriefGenerator {
-        if _dailyBriefGenerator == nil {
-            _dailyBriefGenerator = DailyBriefGenerator(appModel: self)
+        get {
+            if _dailyBriefGenerator == nil {
+                _dailyBriefGenerator = DailyBriefGenerator(appModel: self)
+            }
+            return _dailyBriefGenerator!
         }
-        return _dailyBriefGenerator!
     }
     
     // MARK: - Computed Properties

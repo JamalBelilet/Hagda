@@ -2,7 +2,6 @@ import Foundation
 import SwiftUI
 
 /// Generates daily briefs based on user sources and behavior
-@MainActor
 class DailyBriefGenerator: ObservableObject {
     @Published var currentBrief: DailyBrief?
     @Published var isGenerating = false
@@ -62,7 +61,7 @@ class DailyBriefGenerator: ObservableObject {
     /// Record user engagement with a brief item
     func recordEngagement(
         briefItemId: UUID,
-        contentId: String,
+        contentId: UUID,
         timeSpent: TimeInterval,
         action: BriefEngagement.EngagementAction
     ) {
@@ -100,7 +99,7 @@ class DailyBriefGenerator: ObservableObject {
     /// Score and select content based on various factors
     private func selectContent(from content: [ContentItem], mode: BriefMode) -> [ScoredContent] {
         var selectedItems: [ScoredContent] = []
-        var selectedSources: Set<String> = []
+        var selectedSources: Set<UUID> = []
         var selectedTypes: [SourceType: Int] = [:]
         
         // Score all content
@@ -137,7 +136,7 @@ class DailyBriefGenerator: ObservableObject {
     /// Calculate score for a content item
     private func calculateScore(
         for item: ContentItem,
-        selectedSources: Set<String>,
+        selectedSources: Set<UUID>,
         selectedTypes: [SourceType: Int]
     ) -> Double {
         var score = 0.0

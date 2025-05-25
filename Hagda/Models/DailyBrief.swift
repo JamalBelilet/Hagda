@@ -197,7 +197,7 @@ struct BriefUserBehavior {
 /// Track how users interact with brief items
 struct BriefEngagement {
     let briefItemId: UUID
-    let contentId: String
+    let contentId: UUID
     let date: Date
     let timeSpent: TimeInterval
     let action: EngagementAction
