@@ -706,7 +706,7 @@ class BlueSkyAPIService {
             
             // Convert feed items to ContentItem objects
             var items: [ContentItem] = []
-            for feedItem in response.feed {
+            for feedItem in response.feed ?? [] {
                 let likes = feedItem.post.likeCount ?? 0
                 let handle = feedItem.post.author.handle
                 let displayName = feedItem.post.author.displayName ?? handle

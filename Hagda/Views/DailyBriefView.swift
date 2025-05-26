@@ -122,7 +122,7 @@ struct DailyBriefView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
     
@@ -259,7 +259,7 @@ struct DailyBriefView: View {
                 }
             }
             .padding(12)
-            .background(Color(NSColor.windowBackgroundColor))
+            .background(Color(.systemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(PlainButtonStyle())
