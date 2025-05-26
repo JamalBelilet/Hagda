@@ -56,7 +56,6 @@ struct EnhancedDailyBriefView: View {
         Button {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                 isExpanded = true
-                HapticManager.shared.impact(.light)
             }
         } label: {
             VStack(alignment: .leading, spacing: 16) {
@@ -454,7 +453,6 @@ struct EnhancedDailyBriefView: View {
         HStack(spacing: 16) {
             Button {
                 // Share brief
-                HapticManager.shared.impact(.light)
             } label: {
                 Label("Share", systemImage: "square.and.arrow.up")
                     .font(.subheadline)
@@ -464,7 +462,6 @@ struct EnhancedDailyBriefView: View {
             
             Button {
                 // Mark all as read
-                HapticManager.shared.success()
             } label: {
                 Label("Mark All Read", systemImage: "checkmark.circle")
                     .font(.subheadline)
@@ -509,14 +506,35 @@ struct EnhancedDailyBriefView: View {
     }
     
     private var errorView: some View {
-        ErrorRetryView(
-            message: "Unable to generate your brief",
-            error: generator.lastError
-        ) {
-            Task {
-                await generator.generateBrief()
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.largeTitle)
+                .foregroundColor(.orange)
+            
+            Text("Unable to generate your brief")
+                .font(.headline)
+            
+            if let error = generator.lastError {
+                Text(error.localizedDescription)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
             }
+            
+            Button {
+                Task {
+                    await generator.generateBrief()
+                }
+            } label: {
+                Label("Try Again", systemImage: "arrow.clockwise")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+            }
+            .buttonStyle(.borderedProminent)
         }
+        .frame(maxWidth: .infinity)
+        .padding(32)
+        .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
     }
@@ -591,8 +609,15 @@ private struct TabButton: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .background(
-                Capsule()
-                    .fill(isSelected ? color.gradient : Color(.systemGray6))
+                Group {
+                    if isSelected {
+                        Capsule()
+                            .fill(color.gradient)
+                    } else {
+                        Capsule()
+                            .fill(Color(.systemGray6))
+                    }
+                }
             )
         }
         .buttonStyle(PlainButtonStyle())
