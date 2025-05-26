@@ -609,6 +609,50 @@ class MastodonAPIService {
         }
     }
     
+    /// Fetch trending posts from Mastodon server
+    /// - Parameters:
+    ///   - server: The Mastodon server domain (e.g., "mastodon.social")
+    ///   - limit: Maximum number of posts to fetch
+    /// - Returns: Array of ContentItem objects representing trending posts
+    func fetchTrendingPosts(server: String, limit: Int = 10) async throws -> [ContentItem] {
+        // Mastodon has a trending statuses endpoint
+        let url = URL(string: "https://\(server)/api/v1/trends/statuses?limit=\(limit)")!
+        
+        var request = URLRequest(url: url)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Hagda/1.0", forHTTPHeaderField: "User-Agent")
+        
+        let (data, _) = try await session.data(for: request)
+        
+        // Parse the response as an array of statuses
+        let statuses = try JSONDecoder().decode([MastodonStatus].self, from: data)
+        
+        // Convert to ContentItem objects
+        return statuses.map { status in
+            // Clean HTML tags from content
+            let cleanedContent = status.content.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+            
+            return ContentItem(
+                title: cleanedContent.isEmpty ? "No content" : cleanedContent,
+                subtitle: "@\(status.account.username) • \(status.favourites_count ?? 0) favorites",
+                date: status.parsedCreatedAt,
+                type: .mastodon,
+                contentPreview: cleanedContent,
+                progressPercentage: 0.0,
+                metadata: [
+                    "statusId": status.id,
+                    "username": status.account.username,
+                    "displayName": status.account.display_name ?? status.account.username,
+                    "favouritesCount": status.favourites_count ?? 0,
+                    "reblogsCount": status.reblogs_count ?? 0,
+                    "repliesCount": status.replies_count ?? 0,
+                    "url": status.url ?? "",
+                    "avatar": status.account.avatar ?? ""
+                ]
+            )
+        }
+    }
+    
     /// Helper method to fetch content from a URL
     /// - Parameters:
     ///   - feedUrl: URL to fetch content from

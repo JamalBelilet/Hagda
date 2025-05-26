@@ -51,6 +51,40 @@ extension ContentItem {
         }
     }
     
+    /// Returns the score for Reddit posts (upvotes - downvotes)
+    var score: Int? {
+        guard type == .reddit,
+              let ups = metadata["ups"] as? Int else {
+            return nil
+        }
+        let downs = metadata["downs"] as? Int ?? 0
+        return ups - downs
+    }
+    
+    /// Returns the like count for social media posts
+    var likeCount: Int? {
+        switch type {
+        case .bluesky:
+            return metadata["likeCount"] as? Int
+        case .mastodon:
+            return metadata["favouritesCount"] as? Int
+        default:
+            return nil
+        }
+    }
+    
+    /// Returns the repost/retweet count for social media posts
+    var repostCount: Int? {
+        switch type {
+        case .bluesky:
+            return metadata["repostCount"] as? Int
+        case .mastodon:
+            return metadata["reblogsCount"] as? Int
+        default:
+            return nil
+        }
+    }
+    
     /// Formats the date as a relative time string
     var relativeTimeString: String {
         let formatter = RelativeDateTimeFormatter()

@@ -321,6 +321,34 @@ class AppModel {
     /// News API service for RSS feed searches and article fetching
     private let newsAPIService = NewsAPIService()
     
+    /// Trending content manager
+    private var trendingManager: TrendingManager?
+    
+    /// Get or create the trending manager
+    private func getTrendingManager() -> TrendingManager {
+        if trendingManager == nil {
+            trendingManager = TrendingManager(
+                newsAPI: newsAPIService,
+                redditAPI: redditAPIService,
+                blueSkyAPI: blueSkyAPIService,
+                mastodonAPI: mastodonAPIService,
+                iTunesAPI: itunesSearchService
+            )
+        }
+        return trendingManager!
+    }
+    
+    /// Fetch trending content from all selected sources
+    /// - Parameters:
+    ///   - forceRefresh: Force refresh even if cache is valid
+    /// - Returns: Array of trending ContentItem objects
+    func fetchTrendingContent(forceRefresh: Bool = false) async -> [ContentItem] {
+        return await getTrendingManager().fetchTrendingContent(
+            sources: feedSources,
+            forceRefresh: forceRefresh
+        )
+    }
+    
     /// Search for sources by query and type (with real APIs for podcasts, Reddit, Mastodon, Bluesky, and news)
     func searchSources(query: String, type: SourceType) -> [Source] {
         // For podcasts, Reddit, Mastodon, Bluesky, and news we return an empty array since search will be handled asynchronously

@@ -6,11 +6,14 @@ struct TrendingContentView: View {
     @State private var trendingItems: [ContentItem] = []
     @State private var selectedItem: ContentItem?
     @State private var showItemDetail = false
+    @State private var isLoading = false
     
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                if trendingItems.isEmpty {
+                if isLoading {
+                    loadingView
+                } else if trendingItems.isEmpty {
                     emptyStateView
                 } else {
                     ForEach(trendingItems) { item in
@@ -24,6 +27,10 @@ struct TrendingContentView: View {
             .padding()
         }
         .navigationTitle("Trending Now")
+        .refreshable {
+            // Pull to refresh
+            await refreshContent()
+        }
         .onAppear {
             // Generate trending items
             loadContent()
@@ -45,9 +52,52 @@ struct TrendingContentView: View {
         }
     }
     
+    // Refresh content (for pull-to-refresh)
+    private func refreshContent() async {
+        do {
+            let trending = await appModel.fetchTrendingContent(forceRefresh: true)
+            
+            // Update UI on main thread with animation
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    trendingItems = trending
+                }
+            }
+        } catch {
+            print("Error refreshing trending content: \(error)")
+        }
+    }
+    
     // Load content items
     private func loadContent() {
-        trendingItems = generateMockTrendingItems()
+        // Fetch real trending content
+        Task {
+            // Set loading state
+            await MainActor.run {
+                isLoading = true
+            }
+            
+            do {
+                let trending = await appModel.fetchTrendingContent(forceRefresh: true)
+                
+                // Update UI on main thread with animation
+                await MainActor.run {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        trendingItems = trending
+                        isLoading = false
+                    }
+                }
+            } catch {
+                print("Error fetching trending content: \(error)")
+                // Fall back to empty state
+                await MainActor.run {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        trendingItems = []
+                        isLoading = false
+                    }
+                }
+            }
+        }
     }
     
     // Card for a trending content item
@@ -109,6 +159,20 @@ struct TrendingContentView: View {
         .padding()
         .background(Color.gray.opacity(0.2))
         .cornerRadius(16)
+    }
+    
+    // Loading state view
+    private var loadingView: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle())
+                .scaleEffect(1.5)
+            
+            Text("Loading trending content...")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 60)
     }
     
     // Empty state when no trending content exists
@@ -241,13 +305,26 @@ struct TrendingContentView: View {
     private func topMetric(for item: ContentItem) -> String? {
         switch item.type {
         case .article:
-            return "\(Int.random(in: 150...5000)) views"
+            // For articles, we don't have view counts yet
+            return nil
         case .reddit:
-            return "\(Int.random(in: 50...2000)) upvotes"
-        case .bluesky, .mastodon:
-            return "\(Int.random(in: 40...800)) likes"
+            if let score = item.score {
+                return "\(score) upvotes"
+            }
+            return nil
+        case .bluesky:
+            if let likes = item.likeCount {
+                return "\(likes) likes"
+            }
+            return nil
+        case .mastodon:
+            if let favs = item.likeCount {
+                return "\(favs) favorites"
+            }
+            return nil
         case .podcast:
-            return "\(Int.random(in: 5...100))K plays"
+            // For podcasts from top charts, show chart position if available
+            return "Top podcast"
         }
     }
     

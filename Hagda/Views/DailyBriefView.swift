@@ -31,7 +31,7 @@ struct DailyBriefView: View {
                 collapsedContent(brief)
             }
         }
-        .background(Color(.systemGray6))
+        .background(Color.gray.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
     
@@ -122,14 +122,14 @@ struct DailyBriefView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(Color(.systemBackground))
+        .background(Color(NSColor.windowBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
     
     // Helper function to get today's items grouped by source
     private func getTodaysItemsBySource(from brief: DailyBrief) -> [BriefItem] {
         let calendar = Calendar.current
-        let today = Date()
+        _ = Date()
         
         // Filter items published today
         let todaysItems = brief.items.filter { item in
@@ -259,7 +259,7 @@ struct DailyBriefView: View {
                 }
             }
             .padding(12)
-            .background(Color(.systemBackground))
+            .background(Color(NSColor.windowBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(PlainButtonStyle())
@@ -277,7 +277,7 @@ struct DailyBriefView: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(.systemGray6))
+        .background(Color.gray.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
