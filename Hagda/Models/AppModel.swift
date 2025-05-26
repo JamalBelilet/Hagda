@@ -192,6 +192,11 @@ class AppModel {
         // Convert UUIDs to strings for storage
         let sourceIdStrings = sourceIds.map { $0.uuidString }
         defaults.set(sourceIdStrings, forKey: "selectedSources")
+        
+        // Refresh daily brief when sources change
+        Task {
+            await dailyBriefGenerator.refreshBrief()
+        }
     }
     
     // MARK: - Setting Updates
@@ -230,6 +235,11 @@ class AppModel {
         } else {
             selectedSources.insert(source.id)
         }
+        
+        // Refresh daily brief when sources change
+        Task {
+            await dailyBriefGenerator.refreshBrief()
+        }
     }
     
     /// Check if a source is currently selected
@@ -247,6 +257,11 @@ class AppModel {
             // If it's a new source, add it and select it
             sources.append(source)
             selectedSources.insert(source.id)
+        }
+        
+        // Refresh daily brief when a new source is added
+        Task {
+            await dailyBriefGenerator.refreshBrief()
         }
     }
     

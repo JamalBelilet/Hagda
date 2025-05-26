@@ -180,8 +180,17 @@ struct ArticleDetailTests {
     
     @Test("ContentItem generates loading state for Articles")
     func testArticleContentItemLoadingState() {
+        // Arrange
+        let source = Source(
+            name: "Test News",
+            type: .article,
+            description: "Test news source",
+            handle: "technology"
+        )
+        
         // Act
-        let contentItem = ContentItem.generateSampleForType(.article)
+        let contentItems = ContentItem.samplesForSource(source, count: 1)
+        let contentItem = contentItems.first!
         
         // Assert
         #expect(contentItem.title == "Loading articles...")

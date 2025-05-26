@@ -49,6 +49,7 @@ struct DailyBriefView: View {
                     Image(systemName: brief.mode.icon)
                         .font(.title2)
                         .foregroundColor(.blue)
+                        .accessibilityIdentifier("BriefModeIcon")
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Today's Brief")
@@ -65,24 +66,103 @@ struct DailyBriefView: View {
                         .foregroundColor(.secondary)
                 }
                 
-                // Preview
-                if let firstItem = brief.items.first {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(firstItem.content.title)
-                            .font(.subheadline)
-                            .lineLimit(2)
-                            .foregroundColor(.primary)
-                        
-                        Text(firstItem.summary)
-                            .font(.caption)
-                            .lineLimit(2)
-                            .foregroundColor(.secondary)
-                    }
-                }
+                // Source previews
+                sourcePreviewsRow(brief)
             }
             .padding()
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityIdentifier("DailyBriefCard")
+    }
+    
+    // MARK: - Source Previews Row
+    
+    private func sourcePreviewsRow(_ brief: DailyBrief) -> some View {
+        let todaysItems = getTodaysItemsBySource(from: brief)
+        
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(Array(todaysItems.enumerated()), id: \.offset) { index, item in
+                    HStack(spacing: 8) {
+                        sourcePreviewItem(item)
+                        
+                        // Add dot separator except after last item
+                        if index < todaysItems.count - 1 {
+                            Circle()
+                                .fill(Color.secondary.opacity(0.5))
+                                .frame(width: 4, height: 4)
+                        }
+                    }
+                }
+            }
+            .padding(.vertical, 4)
+        }
+    }
+    
+    private func sourcePreviewItem(_ item: BriefItem) -> some View {
+        HStack(spacing: 6) {
+            // Source icon
+            Image(systemName: item.content.source.type.icon)
+                .font(.caption2)
+                .foregroundColor(item.category.color)
+                .frame(width: 16, height: 16)
+            
+            // Content preview
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.content.source.name)
+                    .font(.caption2)
+                    .fontWeight(.medium)
+                    .foregroundColor(.secondary)
+                
+                Text(item.content.title)
+                    .font(.caption)
+                    .lineLimit(1)
+                    .foregroundColor(.primary)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+    
+    // Helper function to get today's items grouped by source
+    private func getTodaysItemsBySource(from brief: DailyBrief) -> [BriefItem] {
+        let calendar = Calendar.current
+        let today = Date()
+        
+        // Filter items published today
+        let todaysItems = brief.items.filter { item in
+            calendar.isDateInToday(item.content.date)
+        }
+        
+        // Group by source and take first from each
+        var seenSources = Set<UUID>()
+        var uniqueSourceItems: [BriefItem] = []
+        
+        for item in todaysItems {
+            if !seenSources.contains(item.content.source.id) {
+                seenSources.insert(item.content.source.id)
+                uniqueSourceItems.append(item)
+            }
+        }
+        
+        // If no items from today, show most recent from each source
+        if uniqueSourceItems.isEmpty {
+            seenSources.removeAll()
+            for item in brief.items {
+                if !seenSources.contains(item.content.source.id) {
+                    seenSources.insert(item.content.source.id)
+                    uniqueSourceItems.append(item)
+                }
+                // Limit to 4 sources for space
+                if uniqueSourceItems.count >= 4 {
+                    break
+                }
+            }
+        }
+        
+        return uniqueSourceItems
     }
     
     // MARK: - Expanded Content
@@ -128,6 +208,7 @@ struct DailyBriefView: View {
                 .padding(.bottom)
             }
             .frame(maxHeight: 400)
+            .accessibilityIdentifier("BriefItemsScrollView")
         }
     }
     
@@ -182,6 +263,7 @@ struct DailyBriefView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityIdentifier("BriefItemRow")
     }
     
     // MARK: - Loading View

@@ -214,8 +214,17 @@ struct PodcastDetailTests {
     
     @Test("ContentItem generates loading state for Podcast")
     func testPodcastContentItemLoadingState() {
+        // Arrange
+        let source = Source(
+            name: "Test Podcast",
+            type: .podcast,
+            description: "Test podcast source",
+            handle: "test-podcast"
+        )
+        
         // Act
-        let contentItem = ContentItem.generateSampleForType(.podcast)
+        let contentItems = ContentItem.samplesForSource(source, count: 1)
+        let contentItem = contentItems.first!
         
         // Assert
         #expect(contentItem.title == "Loading podcast episodes...")

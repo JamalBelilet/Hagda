@@ -130,7 +130,7 @@ struct UnifiedProgressTrackerTests {
         #expect(contentItem.type == .article)
         #expect(contentItem.progressPercentage == 0.6)
         #expect(contentItem.subtitle.contains("min left"))
-        #expect(contentItem.metadata?["author"] as? String == "John Doe")
+        #expect(contentItem.metadata["author"] as? String == "John Doe")
     }
     
     @Test("Progress cleanup")
