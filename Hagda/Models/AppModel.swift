@@ -63,7 +63,7 @@ class AppModel {
     var dailyBriefGenerator: DailyBriefGenerator {
         get {
             if _dailyBriefGenerator == nil {
-                _dailyBriefGenerator = DailyBriefGenerator(appModel: self)
+                _dailyBriefGenerator = EnhancedDailyBriefGenerator(appModel: self)
             }
             return _dailyBriefGenerator!
         }

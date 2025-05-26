@@ -127,7 +127,7 @@ struct FeedView: View {
             List {
                 // Today's Brief Section
                 Section {
-                    DailyBriefView(generator: appModel.dailyBriefGenerator)
+                    EnhancedDailyBriefView(generator: appModel.dailyBriefGenerator)
                         .padding(.vertical, 8)
                 } header: {
                     SectionHeaderView(
