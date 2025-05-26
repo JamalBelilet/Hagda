@@ -108,6 +108,16 @@ enum BriefMode: String, Codable, CaseIterable {
         case .weekend: return 12
         }
     }
+    
+    var color: Color {
+        switch self {
+        case .rush: return .orange
+        case .standard: return .blue
+        case .leisurely: return .purple
+        case .commute: return .green
+        case .weekend: return .indigo
+        }
+    }
 }
 
 /// Categories for organizing brief content
