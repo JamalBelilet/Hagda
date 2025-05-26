@@ -297,6 +297,16 @@ class RedditAPIService {
         }
     }
     
+    /// Fetch hot posts from a subreddit (for trending content)
+    /// - Parameters:
+    ///   - subreddit: The name of the subreddit (without "r/")
+    ///   - limit: Maximum number of results (default: 10)
+    /// - Returns: Array of ContentItem objects representing hot posts
+    func fetchHotPosts(subreddit: String, limit: Int = 10) async throws -> [ContentItem] {
+        // Use the existing fetchSubredditContent method which already fetches hot posts
+        return try await fetchSubredditContent(subredditName: subreddit, limit: limit)
+    }
+    
     /// Fetch posts from a subreddit
     /// - Parameters:
     ///   - subredditName: The name of the subreddit (without "r/")

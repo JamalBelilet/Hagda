@@ -294,6 +294,64 @@ class ITunesSearchService {
         return response.results.map { $0.toSource() }
     }
     
+    /// Fetch top podcasts from iTunes charts
+    /// - Parameters:
+    ///   - limit: Maximum number of podcasts to fetch
+    /// - Returns: Array of ContentItem objects representing top podcasts
+    func fetchTopPodcasts(limit: Int = 10) async throws -> [ContentItem] {
+        // Use iTunes RSS feed for top podcasts
+        let topPodcastsURL = "https://itunes.apple.com/us/rss/toppodcasts/limit=\(limit)/json"
+        
+        guard let url = URL(string: topPodcastsURL) else {
+            throw URLError(.badURL)
+        }
+        
+        let (data, _) = try await session.data(from: url)
+        
+        // Parse the iTunes RSS feed JSON format
+        if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let feed = json["feed"] as? [String: Any],
+           let entries = feed["entry"] as? [[String: Any]] {
+            
+            return entries.compactMap { entry in
+                guard let title = (entry["im:name"] as? [String: Any])?["label"] as? String,
+                      let artist = (entry["im:artist"] as? [String: Any])?["label"] as? String,
+                      let summary = (entry["summary"] as? [String: Any])?["label"] as? String,
+                      let images = entry["im:image"] as? [[String: Any]],
+                      let largestImage = images.last,
+                      let imageUrl = largestImage["label"] as? String else {
+                    return nil
+                }
+                
+                // Create a pseudo-source for the podcast
+                let source = Source(
+                    name: title,
+                    type: .podcast,
+                    description: summary,
+                    handle: "by \(artist)",
+                    artworkUrl: imageUrl
+                )
+                
+                return ContentItem(
+                    title: title,
+                    subtitle: artist,
+                    description: summary,
+                    date: Date(), // Top charts are current
+                    type: .podcast,
+                    contentPreview: summary,
+                    progressPercentage: 0.0,
+                    metadata: [
+                        "artist": artist,
+                        "imageUrl": imageUrl
+                    ],
+                    source: source
+                )
+            }
+        }
+        
+        return []
+    }
+    
     /// Fetch podcast episodes from RSS feed
     /// - Parameter feedUrl: URL to the podcast's RSS feed
     /// - Returns: Array of ContentItem objects representing episodes

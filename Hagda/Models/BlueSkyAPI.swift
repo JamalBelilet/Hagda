@@ -677,6 +677,66 @@ class BlueSkyAPIService {
         throw URLError(.badURL)
     }
     
+    /// Fetch popular posts from BlueSky (for trending content)
+    /// - Parameters:
+    ///   - limit: Maximum number of posts to fetch
+    /// - Returns: Array of ContentItem objects representing popular posts
+    func fetchPopularPosts(limit: Int = 10) async throws -> [ContentItem] {
+        // BlueSky doesn't have a dedicated trending endpoint yet, so we'll use the popular feed
+        // In the future, this could be replaced with a proper trending API when available
+        var components = URLComponents(string: "\(baseURL)/app.bsky.feed.getPopular")
+        components?.queryItems = [
+            URLQueryItem(name: "limit", value: "\(limit)")
+        ]
+        
+        guard let url = components?.url else {
+            throw URLError(.badURL)
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Hagda/1.0", forHTTPHeaderField: "User-Agent")
+        
+        let (data, _) = try await session.data(for: request)
+        
+        // Parse response using the same structure as author feed
+        let decoder = JSONDecoder()
+        do {
+            let response = try decoder.decode(GetAuthorFeedResponse.self, from: data)
+            
+            // Convert feed items to ContentItem objects
+            var items: [ContentItem] = []
+            for feedItem in response.feed {
+                let likes = feedItem.post.likeCount ?? 0
+                let handle = feedItem.post.author.handle
+                let displayName = feedItem.post.author.displayName ?? handle
+                
+                let item = ContentItem(
+                    title: feedItem.post.record.text,
+                    subtitle: "@\(handle) • \(likes) likes",
+                    date: Date(), // BlueSky posts don't have a date in this format
+                    type: .bluesky,
+                    contentPreview: feedItem.post.record.text,
+                    progressPercentage: 0.0,
+                    metadata: [
+                        "uri": feedItem.post.uri,
+                        "handle": handle,
+                        "displayName": displayName,
+                        "likeCount": likes,
+                        "repostCount": feedItem.post.repostCount ?? 0,
+                        "replyCount": feedItem.post.replyCount ?? 0,
+                        "avatar": feedItem.post.author.avatar ?? ""
+                    ]
+                )
+                items.append(item)
+            }
+            return items
+        } catch {
+            print("Error parsing BlueSky popular feed: \(error)")
+            return []
+        }
+    }
+    
     /// Fetch thread (replies) for a specific post
     /// - Parameters:
     ///   - uri: The AT URI of the post

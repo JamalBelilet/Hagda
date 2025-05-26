@@ -24,7 +24,9 @@ class AudioPlayerManager: NSObject, ObservableObject {
     private var player: AVPlayer?
     private var playerItem: AVPlayerItem?
     private var timeObserver: Any?
+    #if os(iOS) || os(visionOS)
     private let session = AVAudioSession.sharedInstance()
+    #endif
     private var cancellables = Set<AnyCancellable>()
     
     // Playback speeds
@@ -42,12 +44,14 @@ class AudioPlayerManager: NSObject, ObservableObject {
     // MARK: - Audio Session Setup
     
     private func setupAudioSession() {
+        #if os(iOS) || os(visionOS)
         do {
             try session.setCategory(.playback, mode: .spokenAudio)
             try session.setActive(true)
         } catch {
             print("Failed to setup audio session: \(error)")
         }
+        #endif
     }
     
     // MARK: - Playback Control
@@ -303,6 +307,7 @@ class AudioPlayerManager: NSObject, ObservableObject {
     // MARK: - Notifications
     
     private func setupNotifications() {
+        #if os(iOS) || os(visionOS)
         // Audio interruptions
         NotificationCenter.default.addObserver(
             self,
@@ -318,6 +323,7 @@ class AudioPlayerManager: NSObject, ObservableObject {
             name: AVAudioSession.routeChangeNotification,
             object: nil
         )
+        #endif
         
         // Player item ended
         NotificationCenter.default.addObserver(
@@ -328,6 +334,7 @@ class AudioPlayerManager: NSObject, ObservableObject {
         )
     }
     
+    #if os(iOS) || os(visionOS)
     @objc private func handleInterruption(_ notification: Notification) {
         guard let info = notification.userInfo,
               let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
@@ -362,6 +369,7 @@ class AudioPlayerManager: NSObject, ObservableObject {
             pause()
         }
     }
+    #endif
     
     @objc private func playerItemDidReachEnd(_ notification: Notification) {
         // Mark as played

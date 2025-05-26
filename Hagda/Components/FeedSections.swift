@@ -568,10 +568,13 @@ extension ContinueItemsView {
 struct TopContentView: View {
     @Environment(AppModel.self) private var appModel
     @State private var topItems: [ContentItem] = []
+    @State private var isLoading = false
     
     var body: some View {
         VStack(spacing: 12) {
-            if topItems.isEmpty {
+            if isLoading {
+                loadingView
+            } else if topItems.isEmpty {
                 emptyStateView
             } else {
                 // Show top content in a scrollable row with large cards
@@ -614,9 +617,33 @@ struct TopContentView: View {
     
     // Load content items
     private func loadContent() {
-        // Generate mock top items with a slight animation
-        withAnimation(.easeInOut(duration: 0.3)) {
-            topItems = generateMockTopItems()
+        // Fetch real trending content
+        Task {
+            // Set loading state
+            await MainActor.run {
+                isLoading = true
+            }
+            
+            do {
+                let trendingItems = await appModel.fetchTrendingContent()
+                
+                // Update UI on main thread with animation
+                await MainActor.run {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        topItems = trendingItems
+                        isLoading = false
+                    }
+                }
+            } catch {
+                print("Error fetching trending content: \(error)")
+                // Fall back to empty state
+                await MainActor.run {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        topItems = []
+                        isLoading = false
+                    }
+                }
+            }
         }
     }
     
@@ -682,6 +709,27 @@ struct TopContentView: View {
         .frame(width: 290, height: 160)
         .background(Color.gray.opacity(0.2))
         .cornerRadius(16)
+    }
+    
+    // Loading state view
+    private var loadingView: some View {
+        HStack {
+            Spacer()
+            
+            VStack(spacing: 12) {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .scaleEffect(1.2)
+                
+                Text("Loading trending content...")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            
+            Spacer()
+        }
+        .frame(height: 160)
     }
     
     // Empty state when no top content exists
@@ -770,13 +818,26 @@ struct TopContentView: View {
     private func topMetric(for item: ContentItem) -> String? {
         switch item.type {
         case .article:
-            return "\(Int.random(in: 150...5000)) views"
+            // For articles, we don't have view counts yet
+            return nil
         case .reddit:
-            return "\(Int.random(in: 50...2000)) upvotes"
-        case .bluesky, .mastodon:
-            return "\(Int.random(in: 40...800)) likes"
+            if let score = item.score {
+                return "\(score) upvotes"
+            }
+            return nil
+        case .bluesky:
+            if let likes = item.likeCount {
+                return "\(likes) likes"
+            }
+            return nil
+        case .mastodon:
+            if let favs = item.likeCount {
+                return "\(favs) favorites"
+            }
+            return nil
         case .podcast:
-            return "\(Int.random(in: 5...100))K plays"
+            // For podcasts from top charts, show chart position if available
+            return "Top podcast"
         }
     }
     

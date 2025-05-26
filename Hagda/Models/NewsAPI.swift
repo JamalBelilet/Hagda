@@ -85,6 +85,16 @@ class NewsAPIService {
         }
     }
     
+    /// Fetch recent articles from a source's RSS feed (for trending content)
+    /// - Parameters:
+    ///   - source: The news source
+    ///   - limit: Maximum number of articles to fetch
+    /// - Returns: Array of ContentItem objects
+    func fetchRecentArticles(source: Source, limit: Int = 10) async throws -> [ContentItem] {
+        // Use the existing fetchArticles method
+        return try await fetchArticles(for: source, limit: limit)
+    }
+    
     /// Fetch articles from a news source
     /// - Parameters:
     ///   - source: The Source object containing RSS feed URL
