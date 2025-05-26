@@ -29,6 +29,21 @@ struct MastodonAccount: Codable {
         case statuses_count = "statusesCount"
     }
     
+    // Memberwise initializer for testing
+    init(id: String, username: String, acct: String, display_name: String, url: String, note: String? = nil, avatar: String? = nil, header: String? = nil, followers_count: Int, following_count: Int, statuses_count: Int) {
+        self.id = id
+        self.username = username
+        self.acct = acct
+        self.display_name = display_name
+        self.url = url
+        self.note = note
+        self.avatar = avatar
+        self.header = header
+        self.followers_count = followers_count
+        self.following_count = following_count
+        self.statuses_count = statuses_count
+    }
+    
     // Custom init to handle missing fields
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -129,6 +144,19 @@ struct MastodonStatus: Codable {
     let favourites_count: Int?
     let media_attachments: [MediaAttachment]?
     
+    // Memberwise initializer for testing
+    init(id: String, created_at: String, content: String, url: String, account: MastodonAccount, replies_count: Int? = nil, reblogs_count: Int? = nil, favourites_count: Int? = nil, media_attachments: [MediaAttachment]? = nil) {
+        self.id = id
+        self.created_at = created_at
+        self.content = content
+        self.url = url
+        self.account = account
+        self.replies_count = replies_count
+        self.reblogs_count = reblogs_count
+        self.favourites_count = favourites_count
+        self.media_attachments = media_attachments
+    }
+    
     var parsedCreatedAt: Date {
         // Parse the Mastodon API date format
         let formatter = DateFormatter()
@@ -189,19 +217,19 @@ struct MastodonStatus: Codable {
             contentPreview: cleanedContent,
             progressPercentage: 0.0,
             metadata: [
-                "statusId": id,
-                "statusUrl": url,
-                "accountId": account.id,
-                "accountUsername": account.username,
-                "accountDisplayName": account.display_name,
-                "accountHandle": account.acct,
-                "accountUrl": account.url,
-                "accountAvatar": account.avatar ?? "",
-                "repliesCount": replies_count ?? 0,
-                "reblogsCount": reblogs_count ?? 0,
-                "favouritesCount": favourites_count ?? 0,
-                "rawContent": content,
-                "mediaAttachments": media_attachments?.map { attachment in
+                "statusId": id as Any,
+                "statusUrl": url as Any,
+                "accountId": account.id as Any,
+                "accountUsername": account.username as Any,
+                "accountDisplayName": account.display_name as Any,
+                "accountHandle": account.acct as Any,
+                "accountUrl": account.url as Any,
+                "accountAvatar": (account.avatar ?? "") as Any,
+                "repliesCount": (replies_count ?? 0) as Any,
+                "reblogsCount": (reblogs_count ?? 0) as Any,
+                "favouritesCount": (favourites_count ?? 0) as Any,
+                "rawContent": content as Any,
+                "mediaAttachments": (media_attachments?.map { attachment in
                     [
                         "id": attachment.id,
                         "type": attachment.type,
@@ -209,7 +237,7 @@ struct MastodonStatus: Codable {
                         "previewUrl": attachment.preview_url,
                         "description": attachment.description ?? ""
                     ]
-                } ?? []
+                } ?? []) as Any
             ]
         )
     }

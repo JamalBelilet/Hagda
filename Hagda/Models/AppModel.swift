@@ -58,6 +58,17 @@ class AppModel {
     /// UserDefaults access for persistence
     private let defaults = UserDefaults.standard
     
+    /// Daily brief generator
+    private var _dailyBriefGenerator: DailyBriefGenerator?
+    var dailyBriefGenerator: DailyBriefGenerator {
+        get {
+            if _dailyBriefGenerator == nil {
+                _dailyBriefGenerator = DailyBriefGenerator(appModel: self)
+            }
+            return _dailyBriefGenerator!
+        }
+    }
+    
     // MARK: - Computed Properties
     
     /// Sources that appear in the feed (only those selected by the user)
@@ -181,6 +192,11 @@ class AppModel {
         // Convert UUIDs to strings for storage
         let sourceIdStrings = sourceIds.map { $0.uuidString }
         defaults.set(sourceIdStrings, forKey: "selectedSources")
+        
+        // Refresh daily brief when sources change
+        Task {
+            await dailyBriefGenerator.refreshBrief()
+        }
     }
     
     // MARK: - Setting Updates
@@ -219,6 +235,11 @@ class AppModel {
         } else {
             selectedSources.insert(source.id)
         }
+        
+        // Refresh daily brief when sources change
+        Task {
+            await dailyBriefGenerator.refreshBrief()
+        }
     }
     
     /// Check if a source is currently selected
@@ -237,11 +258,23 @@ class AppModel {
             sources.append(source)
             selectedSources.insert(source.id)
         }
+        
+        // Refresh daily brief when a new source is added
+        Task {
+            await dailyBriefGenerator.refreshBrief()
+        }
     }
     
     /// Find a source by name and type
     func findSource(name: String, type: SourceType) -> Source? {
         return sources.first { $0.name == name && $0.type == type }
+    }
+    
+    /// Get content for a specific source
+    func getContent(for source: Source) -> [ContentItem] {
+        // For MVP, return sample content
+        // In the future, this will fetch real content from the source
+        return ContentItem.samplesForSource(source)
     }
     
     // MARK: - API Services

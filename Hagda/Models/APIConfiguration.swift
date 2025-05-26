@@ -35,10 +35,10 @@ final class APIConfiguration {
         let data = value.data(using: .utf8)!
         
         let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: key,
-            kSecValueData as String: data
+            kSecClass as String: kSecClassGenericPassword as Any,
+            kSecAttrService as String: keychainService as Any,
+            kSecAttrAccount as String: key as Any,
+            kSecValueData as String: data as Any
         ]
         
         // Delete existing item if present
@@ -54,10 +54,10 @@ final class APIConfiguration {
     /// Retrieves a credential from the keychain
     func retrieveCredential(key: String) throws -> String? {
         let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: key,
-            kSecReturnData as String: true
+            kSecClass as String: kSecClassGenericPassword as Any,
+            kSecAttrService as String: keychainService as Any,
+            kSecAttrAccount as String: key as Any,
+            kSecReturnData as String: true as Any
         ]
         
         var item: CFTypeRef?
@@ -81,9 +81,9 @@ final class APIConfiguration {
     /// Deletes a credential from the keychain
     func deleteCredential(key: String) throws {
         let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: key
+            kSecClass as String: kSecClassGenericPassword as Any,
+            kSecAttrService as String: keychainService as Any,
+            kSecAttrAccount as String: key as Any
         ]
         
         let status = SecItemDelete(query as CFDictionary)

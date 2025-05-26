@@ -146,10 +146,10 @@ struct PodcastProgressTrackerTests {
         #expect(contentItem.progressPercentage == progress?.progressPercentage ?? 0)
         
         // Check metadata
-        #expect(contentItem.metadata?["episodeGuid"] as? String == episode.id)
-        #expect(contentItem.metadata?["podcastName"] as? String == "Test Podcast")
-        #expect(contentItem.metadata?["audioUrl"] as? String == "https://example.com/episode5.mp3")
-        #expect(contentItem.metadata?["sourceId"] as? String == "source-999")
+        #expect(contentItem.metadata["episodeGuid"] as? String == episode.id)
+        #expect(contentItem.metadata["podcastName"] as? String == "Test Podcast")
+        #expect(contentItem.metadata["audioUrl"] as? String == "https://example.com/episode5.mp3")
+        #expect(contentItem.metadata["sourceId"] as? String == "source-999")
         
         // Cleanup
         tracker.clearProgress(for: episode.id)

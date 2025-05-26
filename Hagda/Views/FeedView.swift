@@ -9,7 +9,6 @@ struct FeedView: View {
     @State private var searchText = ""
     @State private var showContinueAll = false
     @State private var showTrendingAll = false
-    @State private var showDailyDetails = false
     @State private var showContentDetail = false
     @State private var selectedContentItem: ContentItem?
     @State private var showSettings = false
@@ -110,9 +109,6 @@ struct FeedView: View {
         .navigationDestination(isPresented: $showTrendingAll) {
             TrendingContentView()
         }
-        .navigationDestination(isPresented: $showDailyDetails) {
-            DailyBriefDetailView()
-        }
         .navigationDestination(isPresented: $showContentDetail) {
             if let item = selectedContentItem {
                 ContentDetailView(item: item)
@@ -129,9 +125,10 @@ struct FeedView: View {
     private var sourcesList: some View {
         ZStack {
             List {
-                // Daily Summary Section
+                // Today's Brief Section
                 Section {
-                    DailySummaryView(showDailyDetails: $showDailyDetails)
+                    DailyBriefView(generator: appModel.dailyBriefGenerator)
+                        .padding(.vertical, 8)
                 } header: {
                     SectionHeaderView(
                         title: "Today's Brief",

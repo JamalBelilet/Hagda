@@ -82,7 +82,7 @@ struct MastodonDetailTests {
     @Test("Fetch Mastodon thread context")
     func testFetchMastodonThreadContext() async throws {
         // Arrange
-        let mockSession = MockURLSession()
+        let mockSession = SharedMockURLSession()
         let service = MastodonAPIService(session: mockSession)
         
         let contextData = """
@@ -129,8 +129,8 @@ struct MastodonDetailTests {
         }
         """.data(using: .utf8)!
         
-        mockSession.data = contextData
-        mockSession.response = HTTPURLResponse(
+        mockSession.mockData = contextData
+        mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://mastodon.social/api/v1/statuses/456/context")!,
             statusCode: 200,
             httpVersion: nil,
@@ -161,7 +161,7 @@ struct MastodonDetailTests {
     @Test("SocialDetailViewModel loads Mastodon details from metadata")
     func testLoadMastodonDetailsFromMetadata() async throws {
         // Arrange
-        let mockSession = MockURLSession()
+        let mockSession = SharedMockURLSession()
         let appModel = AppModel.shared
         
         // Create a content item with metadata
@@ -216,8 +216,8 @@ struct MastodonDetailTests {
         }
         """.data(using: .utf8)!
         
-        mockSession.data = contextData
-        mockSession.response = HTTPURLResponse(
+        mockSession.mockData = contextData
+        mockSession.mockResponse = HTTPURLResponse(
             url: URL(string: "https://mastodon.social/api/v1/statuses/456/context")!,
             statusCode: 200,
             httpVersion: nil,
@@ -249,8 +249,17 @@ struct MastodonDetailTests {
     
     @Test("ContentItem generates loading state for Mastodon")
     func testMastodonContentItemLoadingState() {
+        // Arrange
+        let source = Source(
+            name: "Test Mastodon",
+            type: .mastodon,
+            description: "Test Mastodon instance",
+            handle: "@test@mastodon.social"
+        )
+        
         // Act
-        let contentItem = ContentItem.generateSampleForType(.mastodon)
+        let contentItems = ContentItem.samplesForSource(source, count: 1)
+        let contentItem = contentItems.first!
         
         // Assert
         #expect(contentItem.title == "Loading Mastodon posts...")
